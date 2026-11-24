@@ -1,0 +1,471 @@
+{
+ "barbell-bench-press": {
+  "files": [
+   "barbell-bench-press-1.jpg",
+   "barbell-bench-press-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Barbell Bench Press - Medium Grip",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Barbell_Bench_Press_-_Medium_Grip",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "seated-chest-press-machine": {
+  "files": [
+   "seated-chest-press-machine-1.jpg",
+   "seated-chest-press-machine-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Machine Bench Press",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Machine_Bench_Press",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "incline-chest-press-machine": {
+  "files": [
+   "incline-chest-press-machine-1.jpg",
+   "incline-chest-press-machine-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Leverage Incline Chest Press",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Leverage_Incline_Chest_Press",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "pec-deck": {
+  "files": [
+   "pec-deck-1.jpg",
+   "pec-deck-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Butterfly",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Butterfly",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "incline-dumbbell-press": {
+  "files": [
+   "incline-dumbbell-press-1.jpg",
+   "incline-dumbbell-press-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Incline Dumbbell Press",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Incline_Dumbbell_Press",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "machine-shoulder-press": {
+  "files": [
+   "machine-shoulder-press-1.jpg",
+   "machine-shoulder-press-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Machine Shoulder (Military) Press",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Machine_Shoulder_Military_Press",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "seated-dumbbell-shoulder-press": {
+  "files": [
+   "seated-dumbbell-shoulder-press-1.jpg",
+   "seated-dumbbell-shoulder-press-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Seated Dumbbell Press",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Seated_Dumbbell_Press",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "cable-lateral-raise": {
+  "files": [
+   "cable-lateral-raise-1.jpg",
+   "cable-lateral-raise-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Cable Seated Lateral Raise",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Cable_Seated_Lateral_Raise",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "dumbbell-lateral-raise": {
+  "files": [
+   "dumbbell-lateral-raise-1.jpg",
+   "dumbbell-lateral-raise-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Side Lateral Raise",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Side_Lateral_Raise",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "triceps-rope-pushdown": {
+  "files": [
+   "triceps-rope-pushdown-1.jpg",
+   "triceps-rope-pushdown-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Triceps Pushdown - Rope Attachment",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Triceps_Pushdown_-_Rope_Attachment",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "straight-bar-pushdown": {
+  "files": [
+   "straight-bar-pushdown-1.jpg",
+   "straight-bar-pushdown-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Triceps Pushdown",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Triceps_Pushdown",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "overhead-cable-triceps-extension": {
+  "files": [
+   "overhead-cable-triceps-extension-1.jpg",
+   "overhead-cable-triceps-extension-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Cable Rope Overhead Triceps Extension",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Cable_Rope_Overhead_Triceps_Extension",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "single-dumbbell-overhead-extension": {
+  "files": [
+   "single-dumbbell-overhead-extension-1.jpg",
+   "single-dumbbell-overhead-extension-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Standing Dumbbell Triceps Extension",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Standing_Dumbbell_Triceps_Extension",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "lat-pulldown": {
+  "files": [
+   "lat-pulldown-1.jpg",
+   "lat-pulldown-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Wide-Grip Lat Pulldown",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Wide-Grip_Lat_Pulldown",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "close-grip-lat-pulldown": {
+  "files": [
+   "close-grip-lat-pulldown-1.jpg",
+   "close-grip-lat-pulldown-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Close-Grip Front Lat Pulldown",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Close-Grip_Front_Lat_Pulldown",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "assisted-pull-up": {
+  "files": [
+   "assisted-pull-up-1.jpg",
+   "assisted-pull-up-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Band Assisted Pull-Up",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Band_Assisted_Pull-Up",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "seated-cable-row": {
+  "files": [
+   "seated-cable-row-1.jpg",
+   "seated-cable-row-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Seated Cable Rows",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Seated_Cable_Rows",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "seated-machine-row": {
+  "files": [
+   "seated-machine-row-1.jpg",
+   "seated-machine-row-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Leverage Iso Row",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Leverage_Iso_Row",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "chest-supported-dumbbell-row": {
+  "files": [
+   "chest-supported-dumbbell-row-1.jpg",
+   "chest-supported-dumbbell-row-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Dumbbell Incline Row",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Dumbbell_Incline_Row",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "one-arm-dumbbell-row": {
+  "files": [
+   "one-arm-dumbbell-row-1.jpg",
+   "one-arm-dumbbell-row-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "One-Arm Dumbbell Row",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/One-Arm_Dumbbell_Row",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "single-arm-cable-row": {
+  "files": [
+   "single-arm-cable-row-1.jpg",
+   "single-arm-cable-row-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Seated One-arm Cable Pulley Rows",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Seated_One-arm_Cable_Pulley_Rows",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "face-pull": {
+  "files": [
+   "face-pull-1.jpg",
+   "face-pull-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Face Pull",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Face_Pull",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "reverse-pec-deck": {
+  "files": [
+   "reverse-pec-deck-1.jpg",
+   "reverse-pec-deck-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Reverse Machine Flyes",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Reverse_Machine_Flyes",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "cable-rear-delt-fly": {
+  "files": [
+   "cable-rear-delt-fly-1.jpg",
+   "cable-rear-delt-fly-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Cable Rear Delt Fly",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Cable_Rear_Delt_Fly",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "dumbbell-bicep-curl": {
+  "files": [
+   "dumbbell-bicep-curl-1.jpg",
+   "dumbbell-bicep-curl-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Dumbbell Bicep Curl",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Dumbbell_Bicep_Curl",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "ez-bar-curl": {
+  "files": [
+   "ez-bar-curl-1.jpg",
+   "ez-bar-curl-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "EZ-Bar Curl",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/EZ-Bar_Curl",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "hammer-curl": {
+  "files": [
+   "hammer-curl-1.jpg",
+   "hammer-curl-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Hammer Curls",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Hammer_Curls",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "rope-hammer-curl": {
+  "files": [
+   "rope-hammer-curl-1.jpg",
+   "rope-hammer-curl-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Cable Hammer Curls - Rope Attachment",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Cable_Hammer_Curls_-_Rope_Attachment",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "barbell-squat": {
+  "files": [
+   "barbell-squat-1.jpg",
+   "barbell-squat-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Barbell Squat",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Barbell_Squat",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "hack-squat": {
+  "files": [
+   "hack-squat-1.jpg",
+   "hack-squat-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Hack Squat",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Hack_Squat",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "goblet-squat": {
+  "files": [
+   "goblet-squat-1.jpg",
+   "goblet-squat-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Goblet Squat",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Goblet_Squat",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "romanian-deadlift": {
+  "files": [
+   "romanian-deadlift-1.jpg",
+   "romanian-deadlift-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Romanian Deadlift",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Romanian_Deadlift",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "leg-press": {
+  "files": [
+   "leg-press-1.jpg",
+   "leg-press-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Leg Press",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Leg_Press",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "bulgarian-split-squat": {
+  "files": [
+   "bulgarian-split-squat-1.jpg",
+   "bulgarian-split-squat-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Split Squat with Dumbbells",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Split_Squat_with_Dumbbells",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "reverse-lunge": {
+  "files": [
+   "reverse-lunge-1.jpg",
+   "reverse-lunge-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Dumbbell Rear Lunge",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Dumbbell_Rear_Lunge",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "lying-leg-curl": {
+  "files": [
+   "lying-leg-curl-1.jpg",
+   "lying-leg-curl-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Lying Leg Curls",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Lying_Leg_Curls",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "seated-leg-curl": {
+  "files": [
+   "seated-leg-curl-1.jpg",
+   "seated-leg-curl-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Seated Leg Curl",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Seated_Leg_Curl",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "leg-extension": {
+  "files": [
+   "leg-extension-1.jpg",
+   "leg-extension-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Leg Extensions",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Leg_Extensions",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "standing-calf-raise": {
+  "files": [
+   "standing-calf-raise-1.jpg",
+   "standing-calf-raise-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Standing Calf Raises",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Standing_Calf_Raises",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "seated-calf-raise": {
+  "files": [
+   "seated-calf-raise-1.jpg",
+   "seated-calf-raise-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Seated Calf Raise",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Seated_Calf_Raise",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "hip-thrust": {
+  "files": [
+   "hip-thrust-1.jpg",
+   "hip-thrust-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Barbell Hip Thrust",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Barbell_Hip_Thrust",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "glute-bridge": {
+  "files": [
+   "glute-bridge-1.jpg",
+   "glute-bridge-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Barbell Glute Bridge",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Barbell_Glute_Bridge",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "cable-crunch": {
+  "files": [
+   "cable-crunch-1.jpg",
+   "cable-crunch-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Cable Crunch",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Cable_Crunch",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "weighted-floor-crunch": {
+  "files": [
+   "weighted-floor-crunch-1.jpg",
+   "weighted-floor-crunch-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Crunches",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Crunches",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "plank": {
+  "files": [
+   "plank-1.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Plank",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Plank",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "hanging-knee-raise": {
+  "files": [
+   "hanging-knee-raise-1.jpg",
+   "hanging-knee-raise-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Hanging Leg Raise",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Hanging_Leg_Raise",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ },
+ "reverse-crunch": {
+  "files": [
+   "reverse-crunch-1.jpg",
+   "reverse-crunch-2.jpg"
+  ],
+  "source": "free-exercise-db (yuhonas)",
+  "sourceEntry": "Reverse Crunch",
+  "url": "https://github.com/yuhonas/free-exercise-db/tree/main/exercises/Reverse_Crunch",
+  "license": "Unlicense (public domain), as declared by the dataset"
+ }
+}
