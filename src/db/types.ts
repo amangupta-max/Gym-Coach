@@ -199,6 +199,8 @@ export interface TimerState {
   pausedRemainingMs: number | null
   /** epoch ms when the rest actually finished */
   finishedAt: number | null
+  /** when this rest was started; identifies one rest across adjustments */
+  startedAt?: number
   sessionId?: string
   setId?: string
   label?: string

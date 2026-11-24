@@ -76,16 +76,16 @@ All data lives only on the device it was entered on. The Mac browser and the pho
 
 ## 5. Using it
 
-- **Home:** today's workout, *Start*, resume or discard an unfinished workout, start any other day, today's cardio, this week's progress.
-- **Active workout:** photo, target muscles, sets × reps, rest, your previous performance and a suggested starting reference. For each set: weight + reps, **Done**, **Undo**, **Skip**. Also *Add set*, *Skip exercise*, *Replace exercise*, *Previous/Next*, and the numbered stepper to jump to any exercise.
-- **Weights are references, never prescriptions:** weight boxes are pre-filled (in grey italics) from the same set last time. The app never increases them. Reps are always typed by you.
-- **Replacing an exercise** only affects today. Sets are saved under the exercise you actually did, so next time you pick the same alternative, its own history shows. If you already did some sets, those stay under the original and the alternative gets the remaining sets.
-- **Rest timer:** starts on *Done* with the slot's rest time. Pause/resume, reset, skip, ±15 s, +30 s, *Set time*, sound toggle.
-- **Finishing:** *Finish* shows the summary (duration, sets, reps, volume, skipped exercises, comparison with the last same workout). *Save and finish* stores it. *Leave unfinished* keeps it resumable. Navigating away never finishes a workout.
-- **Routine:** view and edit each day (sets, reps, rest, order, add/remove exercises, alternatives, rest day). Edits affect future workouts only. *Reset day to default* restores the original plan.
-- **Library:** 49 exercises with instructions, form tips, common mistakes, alternatives and your records. *Use my own photo* replaces the image (stored on the device and included in backups).
-- **Progress:** filter by date range; total and weekly completion; per-exercise charts; personal records; body weight and waist logs.
-- **Cardio:** treadmill warm-up (10 min, incline 3.5, 6 km/h) and 45 min evening walk are preloaded. Nothing counts as done until you log it.
+Four tabs at the bottom: **Today**, **Plan**, **Progress**, **Settings**.
+
+- **Today:** today's workout with **Start workout**, an unfinished workout to resume or discard, other days to train, this week's dots, and today's cardio.
+- **Workout screen:** the bar under the header has one segment per exercise; tap a segment to jump. Each set row has weight, reps and a round **tick**: tap it to log the set, tap again to undo. *Skip set* sits under the next set to do. *How to* opens the photo, steps, form tips and logging rule. *Swap* replaces the exercise for today only. The bottom bar has previous, *Skip exercise* and *Next*.
+- **Weights are references, never prescriptions:** weight boxes are pre-filled (lighter text) from the same set last time, and each row shows "Last 35 kg × 10". The app never increases them. Reps are always typed by you.
+- **Rest timer:** logging a set opens the purple rest dock with a countdown ring, ±15 s, +30 s, *Set time*, pause, restart and *Skip rest*. *Hide* shrinks it to a pill so you can edit the next set.
+- **Finishing:** *Finish* shows the summary (duration, sets, reps, volume, skipped exercises, comparison with the last same workout). *Save workout* stores it. *Leave unfinished* keeps it resumable. Navigating away never finishes a workout.
+- **Plan:** *Week* lists each day; open one to start it, edit it (sets, reps, rest, order, alternatives, rest day) or reset it. *Exercises* is the 49 exercise library with search and muscle filters; *Use my own photo* replaces an image.
+- **Progress:** *Overview* (workouts per week, exercise charts with date range, personal records), *History* (every saved workout, editable), *Body* (body weight and waist).
+- **Cardio:** from Today. Treadmill warm-up (10 min, incline 3.5, 6 km/h) and 45 min evening walk are preloaded. Nothing counts as done until you log it.
 
 ### Logging conventions (consistency matters more than the convention)
 - Dumbbells: weight of **one** dumbbell. Barbell / EZ bar: **total** including the bar. Machines: number on the stack (plate-loaded: plates only).
@@ -103,7 +103,7 @@ All data lives only on the device it was entered on. The Mac browser and the pho
 - **Dev over Wi‑Fi (http)** can't be installed or used offline; that needs the HTTPS link.
 - **Images:** 47 of 49 exercises have a verified public domain photo. Two show a placeholder (Dumbbell Romanian Deadlift, Single-Arm Machine Row). Three photos show a close variation and say so in a caption (seated cable lateral raise, band-assisted pull-up, floor crunch without weight). The photos come from a dataset that declares them public domain; see `docs/IMAGE_CREDITS.md`.
 - Charts are deliberately basic. Library exercise content is read-only in Phase 1 (except your own photo); routines are fully editable.
-- The JavaScript bundle is ~590 KB (precached once; irrelevant offline).
+- The JavaScript bundle is ~600 KB plus a 90 KB font, all precached once.
 
 ## 7. Tested features
 

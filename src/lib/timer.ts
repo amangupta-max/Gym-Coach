@@ -38,6 +38,7 @@ export function startTimer(seconds: number, meta: { sessionId?: string; setId?: 
     endAt: Date.now() + ms,
     pausedRemainingMs: null,
     finishedAt: null,
+    startedAt: Date.now(),
     ...meta,
   }))
 }

@@ -1,57 +1,40 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ExerciseImage } from '../components/ExerciseImage'
+import { ExerciseImage, ExerciseThumb } from '../components/ExerciseImage'
+import { IconBook, IconCheck, IconChevronLeft, IconChevronRight, IconPlus, IconSearch, IconSwap, IconX } from '../components/icons'
 import { RestTimerPanel } from '../components/RestTimer'
-import { act, Btn, Modal, NumberInput, toastError } from '../components/ui'
+import { act, Btn, fieldClass, Modal, NumberInput, Stat, toastError } from '../components/ui'
 import { db } from '../db/db'
 import type { Exercise, LogType, Session, SessionExercise, SessionSet } from '../db/types'
 import { setKeepAwake, unlockAudio } from '../lib/device'
-import { useExercises, useNow, useSettings, useTimerState } from '../lib/hooks'
-import {
-  addSet,
-  completeSet,
-  goToExercise,
-  removeSet,
-  replaceExercise,
-  setSkipExercise,
-  skipSet,
-  undoSet,
-  updateSetValues,
-} from '../lib/session'
+import { useExercises, useNow, useSettings } from '../lib/hooks'
+import { addSet, completeSet, goToExercise, removeSet, replaceExercise, setSkipExercise, skipSet, undoSet, updateSetValues } from '../lib/session'
 import { exerciseStats, previousPerformance, type PerfSet } from '../lib/stats'
 import { startTimer } from '../lib/timer'
-import { byName, fmtDate, fmtDuration, fmtNum, rangeText, repUnit, setLabel, weightLabel } from '../lib/util'
+import { byName, fmtDate, fmtDuration, fmtRest, rangeText, setLabel, weightColumn } from '../lib/util'
 
 export default function ActiveWorkout() {
   const { id = '' } = useParams()
   const session = useLiveQuery(() => db.sessions.get(id).then((s) => s ?? null), [id])
   const exMap = useExercises()
   const settings = useSettings()
-  const timer = useTimerState()
   const now = useNow(15000)
+  const [dock, setDock] = useState<boolean | null>(null)
+  const onDock = useCallback((v: boolean | null) => setDock(v), [])
 
   useEffect(() => {
     setKeepAwake(settings.keepScreenAwake)
     return () => setKeepAwake(false)
   }, [settings.keepScreenAwake])
 
-  if (session === undefined || !exMap) return <p className="p-4 text-slate-500">Loading workout…</p>
-  if (session === null)
+  if (session === undefined || !exMap) return null
+  if (session === null || session.status === 'completed')
     return (
-      <div className="p-4">
-        <p>This workout no longer exists.</p>
-        <Link className="text-emerald-700 underline" to="/">
-          Go home
-        </Link>
-      </div>
-    )
-  if (session.status === 'completed')
-    return (
-      <div className="p-4">
-        <p>This workout is already finished.</p>
-        <Link className="text-emerald-700 underline" to={`/history/${session.id}`}>
-          View it in history
+      <div className="p-6">
+        <p className="text-ink-200">{session ? 'This workout is already saved.' : 'This workout no longer exists.'}</p>
+        <Link className="mt-3 inline-block font-semibold text-iris-300" to={session ? `/history/${session.id}` : '/'}>
+          {session ? 'Open it in history' : 'Go to Today'}
         </Link>
       </div>
     )
@@ -62,66 +45,76 @@ export default function ActiveWorkout() {
   const doneSets = session.exercises.reduce((n, e) => n + e.sets.filter((s) => s.status === 'completed').length, 0)
   const totalSets = session.exercises.reduce((n, e) => n + e.sets.length, 0)
 
+  // What comes after the current rest, for the timer dock.
+  const nextPending = sx.sets.findIndex((s) => s.status === 'pending')
+  const nextEx = session.exercises.slice(idx + 1).find((e) => !e.skipped)
+  const next =
+    nextPending >= 0
+      ? { title: `set ${nextPending + 1} of ${sx.sets.length}`, detail: sx.sets[nextPending].weight !== null ? `${sx.sets[nextPending].weight} kg ready` : undefined }
+      : nextEx
+        ? { title: exMap.get(nextEx.exerciseId)?.name ?? 'next exercise' }
+        : { title: 'finish the workout' }
+
   return (
-    <div className={timer.status !== 'idle' ? 'pb-44' : 'pb-8'}>
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-2 backdrop-blur">
+    <div className={`relative min-h-dvh ${dock === true ? 'pb-[22rem]' : 'pb-44'}`}>
+      <div className="bg-aura pointer-events-none absolute inset-x-0 top-0 -z-10 h-96" />
+      <header className="sticky top-0 z-20 bg-ink-1000/80 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 backdrop-blur-md">
         <div className="flex items-center justify-between gap-2">
-          <Link to="/" className="text-sm text-slate-600">
-            ‹ Home
+          <Link to="/" aria-label="Back to Today" className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-300 active:bg-ink-800">
+            <IconX />
           </Link>
-          <div className="text-center">
-            <div className="font-semibold" data-testid="workout-name">
+          <div className="min-w-0 text-center">
+            <div className="truncate font-semibold" data-testid="workout-name">
               {session.name}
             </div>
-            <div className="text-xs text-slate-500">
-              {fmtDuration(now - session.startedAt)} · {doneSets}/{totalSets} sets
+            <div className="text-[13px] text-ink-400 tabular-nums">
+              {fmtDuration(now - session.startedAt)}, {doneSets} of {totalSets} sets
             </div>
           </div>
-          <Link to={`/workout/${session.id}/finish`} className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white">
+          <Link to={`/workout/${session.id}/finish`} className="h-10 rounded-full bg-ink-800 px-4 text-[15px] leading-10 font-semibold text-ink-100 active:bg-ink-700">
             Finish
           </Link>
         </div>
-        <ExerciseStepper session={session} exMap={exMap} />
+        <ExerciseBar session={session} exMap={exMap} />
       </header>
-      <div className="px-4 pt-3">
+      <div className="px-4 pt-4">
         {ex ? (
-          <ExercisePanel key={sx.id} session={session} idx={idx} sx={sx} ex={ex} exMap={exMap} autoTimer={settings.autoStartTimer} />
+          <ExercisePanel key={sx.id} session={session} idx={idx} sx={sx} ex={ex} exMap={exMap} autoTimer={settings.autoStartTimer} dockOpen={dock === true} />
         ) : (
-          <p className="text-red-700">Exercise “{sx.exerciseId}” is missing from the library.</p>
+          <p className="text-rose-400">Exercise “{sx.exerciseId}” is missing from the library.</p>
         )}
       </div>
-      <RestTimerPanel />
+      <RestTimerPanel next={next} onVisibleChange={onDock} />
     </div>
   )
 }
 
-function exerciseState(e: SessionExercise): 'done' | 'skipped' | 'partial' | 'todo' {
+function exerciseState(e: SessionExercise) {
   const completed = e.sets.filter((s) => s.status === 'completed').length
   const pending = e.sets.filter((s) => s.status === 'pending').length
-  if (e.skipped && completed === 0) return 'skipped'
-  if (pending === 0 && completed > 0) return 'done'
-  if (completed > 0) return 'partial'
-  return 'todo'
+  return { completed, pending, total: e.sets.length, skipped: e.skipped && completed === 0 }
 }
 
-function ExerciseStepper({ session, exMap }: { session: Session; exMap: Map<string, Exercise> }) {
+/** One segment per exercise: fill shows how many sets are logged. */
+function ExerciseBar({ session, exMap }: { session: Session; exMap: Map<string, Exercise> }) {
   return (
-    <ol className="no-scrollbar mt-2 flex gap-1 overflow-x-auto pb-1" aria-label="Exercises">
+    <ol className="mt-2 flex gap-1" aria-label="Exercises">
       {session.exercises.map((e, i) => {
         const st = exerciseState(e)
         const active = i === session.currentIndex
-        const color =
-          st === 'done' ? 'bg-emerald-600 text-white' : st === 'skipped' ? 'bg-slate-300 text-slate-600 line-through' : st === 'partial' ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-100 text-slate-700'
+        const pct = st.total ? ((st.total - st.pending) / st.total) * 100 : 0
         return (
-          <li key={e.id}>
+          <li key={e.id} className="flex-1">
             <button
               type="button"
               onClick={act(() => goToExercise(session.id, i))}
-              className={`min-h-9 min-w-9 rounded-md px-2 text-sm font-medium ${color} ${active ? 'ring-2 ring-slate-900' : ''}`}
+              className="flex h-7 w-full items-center"
+              aria-label={`Exercise ${i + 1}: ${exMap.get(e.exerciseId)?.name ?? ''}`}
               aria-current={active ? 'step' : undefined}
-              title={exMap.get(e.exerciseId)?.name}
             >
-              {i + 1}
+              <span className={`relative block w-full overflow-hidden rounded-full ${active ? 'h-2 bg-ink-600' : 'h-1.5 bg-ink-800'}`}>
+                <span className={`absolute inset-y-0 left-0 rounded-full ${st.skipped ? 'bg-ink-600' : 'bg-drive'}`} style={{ width: `${st.skipped ? 100 : pct}%` }} />
+              </span>
             </button>
           </li>
         )
@@ -137,6 +130,7 @@ function ExercisePanel({
   ex,
   exMap,
   autoTimer,
+  dockOpen,
 }: {
   session: Session
   idx: number
@@ -144,15 +138,17 @@ function ExercisePanel({
   ex: Exercise
   exMap: Map<string, Exercise>
   autoTimer: boolean
+  dockOpen: boolean
 }) {
   const nav = useNavigate()
   const [replaceOpen, setReplaceOpen] = useState(false)
+  const [howOpen, setHowOpen] = useState(false)
   const stats = useLiveQuery(() => exerciseStats(sx.exerciseId, ex.logType, session.id), [sx.exerciseId, session.id])
   const planned = exMap.get(sx.plannedExerciseId)
   const isLast = idx === session.exercises.length - 1
-  const unit = repUnit(ex.logType)
   const allDone = sx.sets.every((s) => s.status !== 'pending')
   const prevSets = stats?.last?.sets ?? []
+  const timeBased = ex.logType === 'time'
 
   const onComplete = async (set: SessionSet) => {
     unlockAudio()
@@ -163,81 +159,51 @@ function ExercisePanel({
       toastError(e)
     }
   }
-
   const next = () => (isLast ? nav(`/workout/${session.id}/finish`) : void goToExercise(session.id, idx + 1).catch(toastError))
 
   return (
     <article data-testid="exercise-panel">
-      <div className="mb-2">
-        <div className="text-xs text-slate-500">
-          Exercise {idx + 1} of {session.exercises.length}
-          {sx.skipped && <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 font-medium text-slate-700">Skipped</span>}
-        </div>
-        <h1 className="text-2xl leading-tight font-bold" data-testid="exercise-name">
-          {ex.name}
-        </h1>
-        {sx.exerciseId !== sx.plannedExerciseId && planned && (
-          <p className="text-sm text-amber-800" data-testid="replaced-note">
-            Replacing planned: {planned.name}
+      <div className="flex items-start gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-[14px] text-ink-400">
+            Exercise {idx + 1} of {session.exercises.length}
+            {sx.skipped && <span className="ml-2 rounded-full bg-ink-800 px-2 py-0.5 text-[13px] text-ink-300">Skipped</span>}
           </p>
-        )}
+          <h1 className="display mt-1 text-[30px] leading-[1.05]" data-testid="exercise-name">
+            {ex.name}
+          </h1>
+          <p className="mt-1.5 text-[15px] text-ink-300">{ex.primaryMuscles.join(', ')}</p>
+          {sx.exerciseId !== sx.plannedExerciseId && planned && (
+            <p className="mt-1 text-[14px] text-iris-300" data-testid="replaced-note">
+              Instead of {planned.name}
+            </p>
+          )}
+        </div>
+        <button type="button" onClick={() => setHowOpen(true)} aria-label="How to do it" className="mt-1 rounded-xl ring-1 ring-ink-700">
+          <ExerciseThumb exercise={ex} size={64} />
+        </button>
       </div>
 
-      <ExerciseImage exercise={ex} />
-
-      <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
-        <dt className="text-slate-500">Target</dt>
-        <dd className="font-medium" data-testid="target">
-          {sx.targetSets} sets × {rangeText(sx.repMin, sx.repMax, unit)}
-          {sx.perSide ? ' per side' : ''}
-        </dd>
-        <dt className="text-slate-500">Rest</dt>
-        <dd className="font-medium">{sx.restSec} sec</dd>
-        <dt className="text-slate-500">Muscles</dt>
-        <dd>
-          {ex.primaryMuscles.join(', ')}
-          {ex.secondaryMuscles.length > 0 && <span className="text-slate-500"> (+ {ex.secondaryMuscles.join(', ')})</span>}
-        </dd>
-        <dt className="text-slate-500">Equipment</dt>
-        <dd>{ex.equipment.join(', ')}</dd>
-      </dl>
-      {ex.weightNote && <p className="mt-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">{ex.weightNote}</p>}
-
-      <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm" data-testid="previous-performance">
-        {stats === undefined ? (
-          'Loading previous performance…'
-        ) : stats.last ? (
-          <>
-            <div className="font-semibold">Previous workout · {fmtDate(stats.last.date)}</div>
-            <ul className="mt-1">
-              {stats.last.sets.map((s, i) => (
-                <li key={i} className="tabular-nums">
-                  {setLabel(s.weight, s.reps, ex.logType)}
-                </li>
-              ))}
-            </ul>
-            {ex.logType !== 'time' && stats.last.sets.some((s) => s.weight !== null) && (
-              <div className="mt-1 text-slate-700">
-                Suggested starting reference: {stats.last.sets.map((s) => (s.weight === null ? 'BW' : `${fmtNum(s.weight)} kg`)).join(', ')}
-                <span className="block text-xs text-slate-500">A reference only. Increase, decrease or keep it, your call.</span>
-              </div>
-            )}
-            <div className="mt-1 text-xs text-slate-600">
-              {stats.best && <>Best: {setLabel(stats.best.weight, stats.best.reps, ex.logType)}</>}
-              {stats.mostReps && ex.logType !== 'time' && <> · Most {unit}: {stats.mostReps.reps}</>}
-            </div>
-          </>
-        ) : (
-          <span>No previous record for {ex.name} yet. Today sets your baseline.</span>
-        )}
+      <div className="mt-5 grid grid-cols-3 gap-3 rounded-2xl bg-ink-900 px-4 py-3.5" data-testid="target">
+        <Stat value={sx.targetSets} label="sets" />
+        <Stat value={rangeText(sx.repMin, sx.repMax, '').trim()} label={`${timeBased ? 'seconds' : 'reps'}${sx.perSide ? ' per side' : ''}`} />
+        <Stat value={fmtRest(sx.restSec)} label="rest" />
       </div>
 
-      <div className="mt-4">
-        <div className="mb-1 grid grid-cols-[1.5rem_1fr_1fr_auto] items-center gap-2 px-1 text-xs font-medium text-slate-500">
-          <span>#</span>
-          <span>{weightLabel(ex.logType)}</span>
-          <span>{ex.logType === 'time' ? 'Seconds' : 'Reps'}</span>
-          <span className="w-[7.5rem]" />
+      <p className="mt-4 px-1 text-[14px] leading-snug text-ink-400" data-testid="previous-performance">
+        {stats === undefined
+          ? ' '
+          : stats.last
+            ? `Last time ${fmtDate(stats.last.date)}.${stats.best ? ` Best ${setLabel(stats.best.weight, stats.best.reps, ex.logType)}.` : ''} Weights are filled in from then, change them freely.`
+            : `No previous record for ${ex.name} yet. Today sets your baseline.`}
+      </p>
+
+      <div className="mt-3">
+        <div className="mb-1.5 grid grid-cols-[2rem_1fr_1fr_3rem] items-center gap-2 px-1 text-[13px] text-ink-400">
+          <span>Set</span>
+          <span className="text-center">{weightColumn(ex)}</span>
+          <span className="text-center">{timeBased ? 'Seconds' : 'Reps'}</span>
+          <span />
         </div>
         <ol className="space-y-2">
           {sx.sets.map((set, i) => (
@@ -252,95 +218,101 @@ function ExercisePanel({
               onReps={(v) => void updateSetValues(session.id, idx, set.id, { reps: v }).catch(toastError)}
               onComplete={() => void onComplete(set)}
               onUndo={act(() => undoSet(session.id, idx, set.id))}
-              onSkip={act(() => skipSet(session.id, idx, set.id))}
+              onSkip={i === sx.sets.findIndex((x) => x.status === 'pending') ? act(() => skipSet(session.id, idx, set.id)) : undefined}
               onRemove={set.extra ? act(() => removeSet(session.id, idx, set.id)) : undefined}
             />
           ))}
         </ol>
-        <Btn className="mt-2 w-full" onClick={act(() => addSet(session.id, idx))}>
-          + Add set
-        </Btn>
+        <button
+          type="button"
+          onClick={act(() => addSet(session.id, idx))}
+          className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-ink-700 text-[15px] font-semibold text-ink-300 active:bg-ink-900"
+        >
+          <IconPlus size={18} />
+          Add set
+        </button>
       </div>
 
-      {allDone && !isLast && (
-        <Btn variant="primary" className="mt-3 w-full" onClick={next}>
-          All sets done · Next exercise ›
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Btn variant="quiet" onClick={() => setHowOpen(true)}>
+          <IconBook size={19} />
+          How to
         </Btn>
-      )}
-      {allDone && isLast && (
-        <Btn variant="primary" className="mt-3 w-full" onClick={next}>
-          Last exercise done · Finish workout ›
+        <Btn variant="quiet" onClick={() => setReplaceOpen(true)} data-testid="replace-button">
+          <IconSwap size={19} />
+          Swap
         </Btn>
-      )}
+      </div>
+      {sx.alternatives.length > 0 && <p className="mt-2 px-1 text-[13px] text-ink-500">Planned alternative: {sx.alternatives.map((a) => exMap.get(a)?.name ?? a).join(', ')}</p>}
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <Btn onClick={act(() => goToExercise(session.id, idx - 1))} disabled={idx === 0}>
-          ‹ Previous
-        </Btn>
-        {sx.skipped ? (
-          <Btn onClick={act(() => setSkipExercise(session.id, idx, false))}>Unskip</Btn>
-        ) : (
-          <Btn
-            onClick={act(async () => {
-              await setSkipExercise(session.id, idx, true)
-              if (!isLast) await goToExercise(session.id, idx + 1)
-            })}
+      {/* Bottom action bar */}
+      <div className={`fixed inset-x-0 bottom-0 z-30 mx-auto max-w-lg border-t border-ink-800 bg-ink-1000/90 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md ${dockOpen ? 'invisible' : ''}`}>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={act(() => goToExercise(session.id, idx - 1))}
+            disabled={idx === 0}
+            aria-label="Previous exercise"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-ink-800 text-ink-200 active:bg-ink-700 disabled:opacity-30"
           >
-            Skip exercise
+            <IconChevronLeft />
+          </button>
+          {sx.skipped ? (
+            <Btn variant="ghost" className="flex-1" onClick={act(() => setSkipExercise(session.id, idx, false))}>
+              Unskip
+            </Btn>
+          ) : (
+            <Btn
+              variant="ghost"
+              className="flex-1"
+              onClick={act(async () => {
+                await setSkipExercise(session.id, idx, true)
+                if (!isLast) await goToExercise(session.id, idx + 1)
+              })}
+            >
+              Skip exercise
+            </Btn>
+          )}
+          <Btn variant={allDone ? 'primary' : 'secondary'} className="flex-1" onClick={next}>
+            {isLast ? 'Finish' : 'Next'}
+            <IconChevronRight size={18} />
           </Btn>
-        )}
-        <Btn onClick={next}>{isLast ? 'Finish ›' : 'Next ›'}</Btn>
+        </div>
       </div>
-      <Btn className="mt-2 w-full" onClick={() => setReplaceOpen(true)} data-testid="replace-button">
-        Replace exercise
-        {sx.alternatives.length > 0 && <span className="ml-1 text-slate-500">({sx.alternatives.map((a) => exMap.get(a)?.name ?? a).join(', ')})</span>}
-      </Btn>
 
-      <details className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
-        <summary className="font-medium">How to do it</summary>
+      <Modal open={howOpen} onClose={() => setHowOpen(false)} title={ex.name}>
+        <ExerciseImage exercise={ex} />
+        {ex.weightNote && <p className="mt-4 rounded-xl bg-ink-850 px-3 py-2.5 text-[14px] text-ink-200">{ex.weightNote}</p>}
         <Instructions ex={ex} />
-      </details>
-
-      <ReplaceSheet
-        open={replaceOpen}
-        onClose={() => setReplaceOpen(false)}
-        session={session}
-        idx={idx}
-        sx={sx}
-        exMap={exMap}
-      />
+      </Modal>
+      <ReplaceSheet open={replaceOpen} onClose={() => setReplaceOpen(false)} session={session} idx={idx} sx={sx} exMap={exMap} />
     </article>
   )
 }
 
 export function Instructions({ ex }: { ex: Exercise }) {
+  const block = (title: string, items: string[], ordered = false) => {
+    const List = ordered ? 'ol' : 'ul'
+    return (
+      <div>
+        <h3 className="mb-2 font-semibold text-ink-100">{title}</h3>
+        <List className="space-y-2">
+          {items.map((s, i) => (
+            <li key={i} className="flex gap-3 text-[15px] leading-snug text-ink-200">
+              <span className={`shrink-0 ${ordered ? 'num w-5 text-[14px] text-iris-300' : 'mt-2 h-1.5 w-1.5 rounded-full bg-ink-500'}`}>{ordered ? i + 1 : ''}</span>
+              <span>{s}</span>
+            </li>
+          ))}
+        </List>
+      </div>
+    )
+  }
   return (
-    <div className="mt-2 space-y-3 text-sm">
-      {ex.description && <p className="text-slate-700">{ex.description}</p>}
-      <div>
-        <h3 className="font-semibold">Steps</h3>
-        <ol className="ml-5 list-decimal space-y-1">
-          {ex.instructions.map((s, i) => (
-            <li key={i}>{s}</li>
-          ))}
-        </ol>
-      </div>
-      <div>
-        <h3 className="font-semibold">Form tips</h3>
-        <ul className="ml-5 list-disc space-y-1">
-          {ex.formTips.map((s, i) => (
-            <li key={i}>{s}</li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h3 className="font-semibold">Common mistakes</h3>
-        <ul className="ml-5 list-disc space-y-1">
-          {ex.commonMistakes.map((s, i) => (
-            <li key={i}>{s}</li>
-          ))}
-        </ul>
-      </div>
+    <div className="mt-5 space-y-6">
+      {ex.description && <p className="text-[15px] leading-relaxed text-ink-300">{ex.description}</p>}
+      {block('Steps', ex.instructions, true)}
+      {block('Form tips', ex.formTips)}
+      {block('Common mistakes', ex.commonMistakes)}
     </div>
   )
 }
@@ -357,7 +329,6 @@ export function SetRow({
   onUndo,
   onSkip,
   onRemove,
-  readOnlyStatus,
 }: {
   n: number
   set: SessionSet
@@ -370,50 +341,66 @@ export function SetRow({
   onUndo?: () => void
   onSkip?: () => void
   onRemove?: () => void
-  readOnlyStatus?: boolean
 }) {
-  const bg = set.status === 'completed' ? 'bg-emerald-50 border-emerald-300' : set.status === 'skipped' ? 'bg-slate-100 border-slate-200 opacity-70' : 'bg-white border-slate-200'
+  const done = set.status === 'completed'
+  const skipped = set.status === 'skipped'
+  const surface = done ? 'bg-sheen ring-1 ring-iris-800' : skipped ? 'bg-ink-950 opacity-60' : 'bg-ink-900'
+  const showFoot = prev || (set.status === 'pending' && (onSkip || onRemove))
   return (
-    <li className={`rounded-lg border p-2 ${bg}`} data-testid={`set-row-${n}`} data-status={set.status}>
-      <div className="grid grid-cols-[1.5rem_1fr_1fr_auto] items-center gap-2">
-        <span className="text-center font-semibold text-slate-600">{n}</span>
+    <li className={`rounded-2xl px-2 py-2 ${surface}`} data-testid={`set-row-${n}`} data-status={set.status}>
+      <div className="grid grid-cols-[2rem_1fr_1fr_3rem] items-center gap-2">
+        <span className={`num text-center text-[17px] ${done ? 'text-iris-300' : 'text-ink-500'}`}>{n}</span>
         <NumberInput
           ariaLabel={`Set ${n} weight`}
           value={set.weight}
           onCommit={onWeight}
-          placeholder={logType === 'weight_reps' ? 'kg' : '—'}
-          className={set.prefilled ? 'text-slate-500 italic' : ''}
+          placeholder={logType === 'weight_reps' ? 'kg' : 'BW'}
+          className={`${set.prefilled ? 'text-ink-300' : ''} ${done ? 'border-transparent bg-transparent' : ''}`}
         />
-        <NumberInput ariaLabel={`Set ${n} ${logType === 'time' ? 'seconds' : 'reps'}`} value={set.reps} onCommit={onReps} placeholder={prev ? String(prev.reps) : repHint} decimal={false} />
-        <div className="flex w-[7.5rem] justify-end gap-1">
-          {readOnlyStatus ? (
-            <span className="text-xs text-slate-600">{set.status}</span>
-          ) : set.status === 'pending' ? (
-            <>
-              <Btn small variant="primary" onClick={onComplete} aria-label={`Complete set ${n}`}>
-                Done
-              </Btn>
-              <Btn small variant="ghost" onClick={onSkip} aria-label={`Skip set ${n}`}>
-                Skip
-              </Btn>
-            </>
-          ) : (
-            <Btn small onClick={onUndo} aria-label={`Undo set ${n}`}>
-              {set.status === 'completed' ? '✓ Undo' : 'Skipped · Undo'}
-            </Btn>
-          )}
-        </div>
+        <NumberInput
+          ariaLabel={`Set ${n} ${logType === 'time' ? 'seconds' : 'reps'}`}
+          value={set.reps}
+          onCommit={onReps}
+          placeholder={prev ? String(prev.reps) : repHint}
+          decimal={false}
+          className={done ? 'border-transparent bg-transparent' : ''}
+        />
+        {set.status === 'pending' ? (
+          <button
+            type="button"
+            onClick={onComplete}
+            aria-label={`Complete set ${n}`}
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-ink-600 text-ink-500 active:border-iris-500 active:text-iris-300"
+          >
+            <IconCheck size={20} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onUndo}
+            aria-label={`Undo set ${n}`}
+            className={`flex h-12 w-12 items-center justify-center rounded-full ${done ? 'bg-drive text-white' : 'bg-ink-800 text-[12px] font-semibold text-ink-300'}`}
+          >
+            {done ? <IconCheck size={20} /> : 'Skip'}
+          </button>
+        )}
       </div>
-      {(prev || set.prefilled || onRemove) && (
-        <div className="mt-1 flex items-center justify-between pl-8 text-xs text-slate-500">
-          <span>
-            {prev ? `Last time: ${setLabel(prev.weight, prev.reps, logType)}` : ''}
-            {set.prefilled ? `${prev ? ' · ' : ''}weight pre-filled as a reference` : ''}
-          </span>
-          {onRemove && set.status !== 'completed' && (
-            <button type="button" className="text-red-700 underline" onClick={onRemove}>
-              Remove set
-            </button>
+      {showFoot && (
+        <div className="mt-1 flex min-h-6 items-center justify-between pr-1 pl-10 text-[13px]">
+          <span className="text-ink-400">{prev ? `Last ${setLabel(prev.weight, prev.reps, logType)}` : ''}</span>
+          {set.status === 'pending' && (
+            <span className="flex gap-3">
+              {onRemove && (
+                <button type="button" className="text-rose-400" onClick={onRemove}>
+                  Remove
+                </button>
+              )}
+              {onSkip && (
+                <button type="button" className="text-ink-400" onClick={onSkip} aria-label={`Skip set ${n}`}>
+                  Skip set
+                </button>
+              )}
+            </span>
           )}
         </div>
       )}
@@ -425,43 +412,31 @@ function AltOption({ exercise, onPick, tag }: { exercise: Exercise; onPick: () =
   const prev = useLiveQuery(() => previousPerformance(exercise.id), [exercise.id])
   return (
     <li>
-      <button type="button" onClick={onPick} className="w-full rounded-lg border border-slate-200 p-3 text-left active:bg-slate-100" data-testid={`alt-${exercise.id}`}>
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="font-semibold">{exercise.name}</span>
-          {tag && <span className="shrink-0 text-xs text-emerald-700">{tag}</span>}
-        </div>
-        <div className="text-sm text-slate-600">
-          {exercise.primaryMuscles.join(', ')} · {exercise.equipment.join(', ')}
-        </div>
-        <div className="text-xs text-slate-500">
-          {prev === undefined
-            ? 'Checking history…'
-            : prev
-              ? `Last: ${fmtDate(prev.date)} · ${prev.sets.map((s) => setLabel(s.weight, s.reps, exercise.logType)).join(', ')}`
-              : 'No history yet'}
-        </div>
+      <button type="button" onClick={onPick} className="flex w-full items-center gap-3 rounded-2xl bg-ink-850 p-3 text-left active:bg-ink-800" data-testid={`alt-${exercise.id}`}>
+        <ExerciseThumb exercise={exercise} size={52} />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-baseline justify-between gap-2">
+            <span className="font-semibold text-ink-100">{exercise.name}</span>
+            {tag && <span className="shrink-0 text-[12px] text-iris-300">{tag}</span>}
+          </span>
+          <span className="block text-[14px] text-ink-300">
+            {exercise.primaryMuscles.join(', ')}, {exercise.equipment.join(', ').toLowerCase()}
+          </span>
+          <span className="block text-[13px] text-ink-400">
+            {prev === undefined
+              ? 'Checking history…'
+              : prev
+                ? `Last ${fmtDate(prev.date)}: ${prev.sets.map((s) => setLabel(s.weight, s.reps, exercise.logType)).join(', ')}`
+                : 'No history yet'}
+          </span>
+        </span>
       </button>
     </li>
   )
 }
 
-function ReplaceSheet({
-  open,
-  onClose,
-  session,
-  idx,
-  sx,
-  exMap,
-}: {
-  open: boolean
-  onClose: () => void
-  session: Session
-  idx: number
-  sx: SessionExercise
-  exMap: Map<string, Exercise>
-}) {
+function ReplaceSheet({ open, onClose, session, idx, sx, exMap }: { open: boolean; onClose: () => void; session: Session; idx: number; sx: SessionExercise; exMap: Map<string, Exercise> }) {
   const [q, setQ] = useState('')
-  const [showAll, setShowAll] = useState(false)
   const current = exMap.get(sx.exerciseId)
   const planned = exMap.get(sx.plannedExerciseId)
 
@@ -476,61 +451,48 @@ function ReplaceSheet({
 
   const others = useMemo(() => {
     const s = q.trim().toLowerCase()
+    if (!s) return []
     const skip = new Set([sx.exerciseId, ...suggested.map((e) => e.id)])
     return Array.from(exMap.values())
-      .filter((e) => !skip.has(e.id))
-      .filter((e) => !s || e.name.toLowerCase().includes(s) || e.targetMuscle.toLowerCase().includes(s))
-      .sort((a, b) => (a.targetMuscle === current?.targetMuscle ? -1 : 0) - (b.targetMuscle === current?.targetMuscle ? -1 : 0) || byName(a, b))
-  }, [q, exMap, sx.exerciseId, suggested, current])
+      .filter((e) => !skip.has(e.id) && (e.name.toLowerCase().includes(s) || e.targetMuscle.toLowerCase().includes(s)))
+      .sort(byName)
+      .slice(0, 30)
+  }, [q, exMap, sx.exerciseId, suggested])
 
   const pick = (id: string) => {
     replaceExercise(session.id, idx, id)
       .then(() => {
         onClose()
         setQ('')
-        setShowAll(false)
       })
       .catch(toastError)
   }
   const hasCompleted = sx.sets.some((s) => s.status === 'completed')
 
   return (
-    <Modal open={open} onClose={onClose} title={`Replace ${current?.name ?? ''}`}>
-      <p className="mb-3 text-sm text-slate-600">
-        Only today's workout changes. Your routine stays the same, and the sets are saved under the exercise you actually do.
-        {hasCompleted && ' Sets you already completed stay recorded under the current exercise; the new one gets the remaining sets.'}
+    <Modal open={open} onClose={onClose} title="Swap exercise">
+      <p className="mb-4 text-[15px] leading-snug text-ink-300">
+        Only today changes. Sets are saved under the exercise you actually do.
+        {hasCompleted && ' Sets already logged stay with the current exercise.'}
       </p>
-      {suggested.length > 0 ? (
+      {suggested.length > 0 && (
         <ul className="space-y-2">
           {suggested.map((e) => (
             <AltOption key={e.id} exercise={e} onPick={() => pick(e.id)} tag={e.id === sx.plannedExerciseId ? 'Back to planned' : sx.alternatives.includes(e.id) ? 'Planned alternative' : undefined} />
           ))}
         </ul>
-      ) : (
-        <p className="text-sm text-slate-500">No alternatives listed for this exercise.</p>
       )}
-      <div className="mt-4">
-        {showAll ? (
-          <>
-            <input
-              className="min-h-11 w-full rounded-lg border border-slate-300 px-3"
-              placeholder="Search all exercises"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              aria-label="Search exercises"
-            />
-            <ul className="mt-2 space-y-2">
-              {others.slice(0, 40).map((e) => (
-                <AltOption key={e.id} exercise={e} onPick={() => pick(e.id)} />
-              ))}
-            </ul>
-          </>
-        ) : (
-          <Btn className="w-full" onClick={() => setShowAll(true)}>
-            Choose any other exercise…
-          </Btn>
-        )}
+      <div className="relative mt-5">
+        <IconSearch size={19} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-500" />
+        <input className={`${fieldClass} pl-11`} placeholder="Search all exercises" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search exercises" />
       </div>
+      {others.length > 0 && (
+        <ul className="mt-3 space-y-2">
+          {others.map((e) => (
+            <AltOption key={e.id} exercise={e} onPick={() => pick(e.id)} />
+          ))}
+        </ul>
+      )}
     </Modal>
   )
 }

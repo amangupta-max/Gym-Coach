@@ -101,6 +101,20 @@ export function weightLabel(logType: LogType): string {
   return 'kg'
 }
 
+/** Short column header that says how to log weight for this exercise. */
+export function weightColumn(ex: Pick<Exercise, 'logType' | 'weightNote'>): string {
+  if (ex.logType === 'assisted_reps') return 'Assist kg'
+  if (ex.logType === 'bodyweight_reps' || ex.logType === 'time') return 'Added kg'
+  const note = ex.weightNote ?? ''
+  if (/ONE dumbbell|one dumbbell|the dumbbell/i.test(note)) return 'kg each'
+  if (/including the bar/i.test(note)) return 'kg total'
+  return 'kg'
+}
+
+export function fmtRest(sec: number): string {
+  return sec >= 60 ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : `${sec}s`
+}
+
 export function rangeText(min: number, max: number, unit: string): string {
   return min === max ? `${min} ${unit}` : `${min}–${max} ${unit}`
 }
@@ -112,6 +126,15 @@ export function setLabel(weight: number | null, reps: number | null, logType: Lo
   if (logType === 'assisted_reps') return weight ? `${r} (assist ${fmtNum(weight)} kg)` : `${r} (no assist)`
   if (logType === 'bodyweight_reps' || logType === 'time') return weight ? `+${fmtNum(weight)} kg × ${r}` : logType === 'time' ? r : `BW × ${r}`
   return `${fmtNum(weight)} kg × ${r}`
+}
+
+/** Compact "57.5×8" form for dense lists. */
+export function compactSet(weight: number | null, reps: number | null, logType: LogType): string {
+  const r = reps ?? '?'
+  if (logType === 'time') return `${weight ? `+${fmtNum(weight)}kg ` : ''}${r}s`
+  if (logType === 'assisted_reps') return weight ? `${r} @ −${fmtNum(weight)}` : `${r}`
+  if (logType === 'bodyweight_reps') return weight ? `+${fmtNum(weight)}×${r}` : `BW×${r}`
+  return `${fmtNum(weight)}×${r}`
 }
 
 export function assetUrl(path: string): string {

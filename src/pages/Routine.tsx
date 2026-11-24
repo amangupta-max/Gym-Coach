@@ -1,41 +1,51 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
-import { act, Btn, Card, NumberInput, PageTitle, toast, toastError } from '../components/ui'
+import { Link, useLocation, useParams } from 'react-router'
+import { ExerciseThumb } from '../components/ExerciseImage'
+import { IconChevronLeft, IconChevronRight, IconX } from '../components/icons'
+import { act, Btn, fieldClass, Group, NumberInput, PageTitle, Segmented, toast, toastError } from '../components/ui'
 import { db } from '../db/db'
 import { defaultRoutine } from '../db/seed/routine'
 import type { Exercise, RoutineDay, RoutineItem, Weekday } from '../db/types'
 import { useExercises } from '../lib/hooks'
-import { byName, rangeText, repUnit, uid, WEEKDAY_NAMES } from '../lib/util'
-import { useStartWorkout } from './Home'
+import { byName, fmtRest, isoWeekday, rangeText, repUnit, uid, WEEKDAY_NAMES, WEEKDAY_SHORT } from '../lib/util'
+import { estimateMinutes, useStartWorkout } from './Home'
+
+export function PlanTabs() {
+  const loc = useLocation()
+  return (
+    <Segmented
+      items={[
+        { to: '/routine', label: 'Week', active: loc.pathname.startsWith('/routine') },
+        { to: '/library', label: 'Exercises', active: loc.pathname.startsWith('/library') },
+      ]}
+    />
+  )
+}
 
 export function RoutineList() {
   const days = useLiveQuery(() => db.routineDays.orderBy('weekday').toArray(), [])
-  const exMap = useExercises()
-  if (!days || !exMap) return <p>Loading…</p>
+  const today = isoWeekday()
+  if (!days) return null
   return (
     <div>
-      <PageTitle sub="Tap a day to view, start or edit it.">Weekly Routine</PageTitle>
-      <ul className="space-y-2">
+      <PageTitle>Plan</PageTitle>
+      <PlanTabs />
+      <Group>
         {days.map((d) => (
-          <li key={d.weekday}>
-            <Link to={`/routine/${d.weekday}`} className="block rounded-xl border border-slate-200 bg-white p-3" data-testid={`routine-day-${d.weekday}`}>
-              <div className="flex items-baseline justify-between">
-                <span className="font-semibold">
-                  {WEEKDAY_NAMES[d.weekday]} · {d.name}
-                </span>
-                <span className="text-xs text-slate-500">{d.isRest ? 'Rest' : `${d.items.length} exercises`}</span>
-              </div>
-              {!d.isRest && (
-                <div className="mt-1 text-sm text-slate-600">
-                  {d.focus}
-                  <div className="text-xs text-slate-500">{d.items.map((i) => exMap.get(i.exerciseId)?.name ?? i.exerciseId).join(' · ')}</div>
-                </div>
-              )}
-            </Link>
-          </li>
+          <Link key={d.weekday} to={`/routine/${d.weekday}`} className="flex items-center gap-4 px-4 py-4 active:bg-ink-850" data-testid={`routine-day-${d.weekday}`}>
+            <span className={`w-9 shrink-0 text-[14px] font-medium ${d.weekday === today ? 'text-iris-300' : 'text-ink-400'}`}>{WEEKDAY_SHORT[d.weekday]}</span>
+            <span className="min-w-0 flex-1">
+              <span className={`block font-semibold ${d.isRest ? 'text-ink-400' : 'text-ink-100'}`}>{d.name}</span>
+              {!d.isRest && <span className="block text-[14px] leading-snug text-ink-400">{d.focus}</span>}
+            </span>
+            {!d.isRest && (
+              <span className="shrink-0 text-right text-[14px] text-ink-400 tabular-nums">{estimateMinutes(d)} min</span>
+            )}
+            <IconChevronRight size={18} className="shrink-0 text-ink-600" />
+          </Link>
         ))}
-      </ul>
+      </Group>
     </div>
   )
 }
@@ -46,7 +56,7 @@ function ExerciseSelect({ exMap, onPick, label, exclude = [] }: { exMap: Map<str
     .sort(byName)
   return (
     <select
-      className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-2"
+      className={fieldClass}
       value=""
       aria-label={label}
       onChange={(e) => {
@@ -82,55 +92,55 @@ function ItemEditor({
 }) {
   const ex = exMap.get(item.exerciseId)
   const num = (label: string, key: 'sets' | 'repMin' | 'repMax' | 'restSec') => (
-    <label className="text-xs text-slate-600">
+    <label className="text-[13px] text-ink-400">
       {label}
-      <NumberInput ariaLabel={`${ex?.name} ${label}`} value={item[key]} decimal={false} onCommit={(v) => v !== null && v > 0 && onChange({ ...item, [key]: v })} />
+      <NumberInput ariaLabel={`${ex?.name} ${label}`} value={item[key]} decimal={false} className="mt-1 text-[18px]" onCommit={(v) => v !== null && v > 0 && onChange({ ...item, [key]: v })} />
     </label>
   )
+  const iconBtn = 'flex h-10 w-10 items-center justify-center rounded-full bg-ink-800 text-ink-200 active:bg-ink-700 disabled:opacity-30'
   return (
-    <Card>
-      <div className="flex items-start justify-between gap-2">
-        <div className="font-semibold">{ex?.name ?? item.exerciseId}</div>
-        <div className="flex gap-1">
-          <Btn small disabled={first} onClick={() => onMove(-1)} aria-label="Move up">
-            ↑
-          </Btn>
-          <Btn small disabled={last} onClick={() => onMove(1)} aria-label="Move down">
-            ↓
-          </Btn>
-          <Btn small variant="danger" onClick={onRemove}>
-            Remove
-          </Btn>
-        </div>
+    <div className="rounded-2xl bg-ink-900 p-4">
+      <div className="flex items-center gap-3">
+        <ExerciseThumb exercise={ex} size={40} />
+        <div className="min-w-0 flex-1 font-semibold">{ex?.name ?? item.exerciseId}</div>
+        <button type="button" className={iconBtn} disabled={first} onClick={() => onMove(-1)} aria-label="Move up">
+          <IconChevronLeft size={18} className="rotate-90" />
+        </button>
+        <button type="button" className={iconBtn} disabled={last} onClick={() => onMove(1)} aria-label="Move down">
+          <IconChevronRight size={18} className="rotate-90" />
+        </button>
+        <button type="button" className={`${iconBtn} text-rose-400`} onClick={onRemove} aria-label={`Remove ${ex?.name}`}>
+          <IconX size={18} />
+        </button>
       </div>
-      <div className="mt-2 grid grid-cols-4 gap-2">
+      <div className="mt-3 grid grid-cols-4 gap-2">
         {num('Sets', 'sets')}
         {num(ex?.logType === 'time' ? 'Min sec' : 'Min reps', 'repMin')}
         {num(ex?.logType === 'time' ? 'Max sec' : 'Max reps', 'repMax')}
         {num('Rest sec', 'restSec')}
       </div>
-      <label className="mt-2 flex items-center gap-2 text-sm">
-        <input type="checkbox" className="h-5 w-5" checked={item.perSide} onChange={(e) => onChange({ ...item, perSide: e.target.checked })} />
-        Reps are per side (per arm / per leg)
+      <label className="mt-3 flex items-center gap-3 text-[15px] text-ink-200">
+        <input type="checkbox" className="h-5 w-5 accent-iris-500" checked={item.perSide} onChange={(e) => onChange({ ...item, perSide: e.target.checked })} />
+        Reps are per arm or per leg
       </label>
-      <div className="mt-2 text-sm">
-        <div className="text-xs text-slate-600">Alternatives</div>
-        <div className="mt-1 flex flex-wrap gap-1">
-          {item.alternatives.length === 0 && <span className="text-xs text-slate-400">None</span>}
+      <div className="mt-3">
+        <div className="text-[13px] text-ink-400">Alternatives</div>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {item.alternatives.length === 0 && <span className="text-[14px] text-ink-500">None</span>}
           {item.alternatives.map((a) => (
-            <span key={a} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs">
+            <span key={a} className="inline-flex items-center gap-1 rounded-full bg-ink-800 py-1 pr-1 pl-3 text-[14px]">
               {exMap.get(a)?.name ?? a}
-              <button type="button" aria-label="Remove alternative" className="text-red-700" onClick={() => onChange({ ...item, alternatives: item.alternatives.filter((x) => x !== a) })}>
-                ✕
+              <button type="button" aria-label="Remove alternative" className="flex h-6 w-6 items-center justify-center rounded-full text-ink-400 active:bg-ink-700" onClick={() => onChange({ ...item, alternatives: item.alternatives.filter((x) => x !== a) })}>
+                <IconX size={14} />
               </button>
             </span>
           ))}
         </div>
-        <div className="mt-1">
-          <ExerciseSelect exMap={exMap} label="+ Add alternative" exclude={[item.exerciseId, ...item.alternatives]} onPick={(id) => onChange({ ...item, alternatives: [...item.alternatives, id] })} />
+        <div className="mt-2">
+          <ExerciseSelect exMap={exMap} label="Add an alternative" exclude={[item.exerciseId, ...item.alternatives]} onPick={(id) => onChange({ ...item, alternatives: [...item.alternatives, id] })} />
         </div>
       </div>
-    </Card>
+    </div>
   )
 }
 
@@ -143,7 +153,7 @@ export function RoutineDayPage() {
   const start = useStartWorkout()
   const [draft, setDraft] = useState<RoutineDay | null>(null)
 
-  if (day === undefined || !exMap) return <p>Loading…</p>
+  if (day === undefined || !exMap) return null
   if (day === null) return <p>Day not found.</p>
 
   if (draft) {
@@ -156,23 +166,23 @@ export function RoutineDayPage() {
     }
     return (
       <div>
-        <PageTitle sub="Changes apply to future workouts. Past workouts are not changed.">Edit {WEEKDAY_NAMES[wd]}</PageTitle>
-        <Card>
-          <label className="block text-sm">
+        <PageTitle sub="Changes apply to future workouts. Past workouts stay as they were.">Edit {WEEKDAY_NAMES[wd]}</PageTitle>
+        <div className="space-y-3 rounded-2xl bg-ink-900 p-4">
+          <label className="block text-[13px] text-ink-400">
             Name
-            <input className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-2" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+            <input className={`${fieldClass} mt-1`} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
           </label>
-          <label className="mt-2 block text-sm">
+          <label className="block text-[13px] text-ink-400">
             Target muscles
-            <input className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-2" value={draft.focus} onChange={(e) => setDraft({ ...draft, focus: e.target.value })} />
+            <input className={`${fieldClass} mt-1`} value={draft.focus} onChange={(e) => setDraft({ ...draft, focus: e.target.value })} />
           </label>
-          <label className="mt-2 flex items-center gap-2 text-sm">
-            <input type="checkbox" className="h-5 w-5" checked={draft.isRest} onChange={(e) => setDraft({ ...draft, isRest: e.target.checked })} />
+          <label className="flex items-center gap-3 text-[15px] text-ink-200">
+            <input type="checkbox" className="h-5 w-5 accent-iris-500" checked={draft.isRest} onChange={(e) => setDraft({ ...draft, isRest: e.target.checked })} />
             Rest day
           </label>
-        </Card>
+        </div>
         {!draft.isRest && (
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 space-y-3">
             {draft.items.map((item, i) => (
               <ItemEditor
                 key={item.id}
@@ -187,27 +197,24 @@ export function RoutineDayPage() {
             ))}
             <ExerciseSelect
               exMap={exMap}
-              label="+ Add exercise to this day"
+              label="Add an exercise to this day"
               onPick={(id) => {
                 const e = exMap.get(id)!
                 setDraft({
                   ...draft,
-                  items: [
-                    ...draft.items,
-                    { id: uid(), exerciseId: id, sets: e.defaultSets, repMin: e.defaultRepMin, repMax: e.defaultRepMax, restSec: e.defaultRestSec, perSide: !!e.perSide, alternatives: [...e.alternatives] },
-                  ],
+                  items: [...draft.items, { id: uid(), exerciseId: id, sets: e.defaultSets, repMin: e.defaultRepMin, repMax: e.defaultRepMax, restSec: e.defaultRestSec, perSide: !!e.perSide, alternatives: [...e.alternatives] }],
                 })
               }}
             />
           </div>
         )}
-        <div className="sticky bottom-16 mt-4 flex gap-2 bg-slate-50 py-2">
+        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] mt-5 flex gap-2 bg-ink-1000/90 py-3 backdrop-blur">
           <Btn
             variant="primary"
             className="flex-1"
             onClick={() => {
               for (const it of draft.items) {
-                if (it.repMin > it.repMax) return toast('Min reps cannot be greater than max reps.', 'error')
+                if (it.repMin > it.repMax) return toast('Min reps cannot be more than max reps.', 'error')
               }
               db.routineDays
                 .put({ ...draft, name: draft.name.trim() || 'Workout', updatedAt: Date.now() })
@@ -228,52 +235,53 @@ export function RoutineDayPage() {
 
   return (
     <div>
-      <Link to="/routine" className="text-sm text-slate-600">
-        ‹ Weekly routine
+      <Link to="/routine" className="-ml-2 mb-3 inline-flex h-10 items-center gap-1 rounded-full pr-3 pl-1 text-[15px] text-ink-300 active:bg-ink-800">
+        <IconChevronLeft size={20} />
+        Plan
       </Link>
-      <PageTitle sub={day.isRest ? 'Rest day' : day.focus}>
-        {WEEKDAY_NAMES[wd]} · {day.name}
-      </PageTitle>
+      <p className="px-1 text-[15px] text-ink-400">{WEEKDAY_NAMES[wd]}</p>
+      <PageTitle sub={day.isRest ? 'Rest day' : day.focus}>{day.name}</PageTitle>
+      {!day.isRest && day.items.length > 0 && !inProgress && (
+        <Btn variant="primary" className="mb-6 h-14 w-full text-[17px]" onClick={() => start(wd)} data-testid="start-day">
+          Start {day.name} workout
+        </Btn>
+      )}
+      {inProgress && <p className="mb-5 rounded-2xl bg-ink-900 px-4 py-3 text-[15px] text-ink-300">Finish or discard your current workout before starting another.</p>}
       {!day.isRest && (
-        <ol className="space-y-2">
-          {day.items.map((it, i) => {
+        <Group>
+          {day.items.map((it) => {
             const ex = exMap.get(it.exerciseId)
             return (
-              <li key={it.id} className="rounded-xl border border-slate-200 bg-white p-3">
-                <Link to={`/library/${it.exerciseId}`} className="font-semibold text-slate-900">
-                  {i + 1}. {ex?.name ?? it.exerciseId}
-                </Link>
-                <div className="text-sm text-slate-600">
-                  {it.sets} sets × {rangeText(it.repMin, it.repMax, repUnit(ex?.logType ?? 'weight_reps'))}
-                  {it.perSide ? ' per side' : ''} · {it.restSec} sec rest
-                </div>
-                {it.alternatives.length > 0 && <div className="text-xs text-slate-500">Alternative: {it.alternatives.map((a) => exMap.get(a)?.name ?? a).join(', ')}</div>}
-              </li>
+              <Link key={it.id} to={`/library/${it.exerciseId}`} className="flex items-center gap-3 px-3 py-3 active:bg-ink-850">
+                <ExerciseThumb exercise={ex} size={48} />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium text-ink-100">{ex?.name ?? it.exerciseId}</span>
+                  <span className="block text-[14px] text-ink-400 tabular-nums">
+                    {it.sets} × {rangeText(it.repMin, it.repMax, repUnit(ex?.logType ?? 'weight_reps'))}
+                    {it.perSide ? ' per side' : ''}, {fmtRest(it.restSec)} rest
+                  </span>
+                  {it.alternatives.length > 0 && <span className="block truncate text-[13px] text-ink-500">or {it.alternatives.map((a) => exMap.get(a)?.name ?? a).join(', ')}</span>}
+                </span>
+              </Link>
             )
           })}
-        </ol>
+        </Group>
       )}
-      <div className="mt-4 space-y-2">
-        {!day.isRest && day.items.length > 0 && !inProgress && (
-          <Btn variant="primary" className="w-full" onClick={() => start(wd)} data-testid="start-day">
-            Start {day.name} workout
-          </Btn>
-        )}
-        {inProgress && <p className="text-sm text-slate-600">You have an unfinished workout. Resume or discard it from Home before starting another.</p>}
-        <Btn className="w-full" onClick={() => setDraft(structuredClone(day))}>
-          Edit this day
+      <div className="mt-6 flex gap-2">
+        <Btn className="flex-1" onClick={() => setDraft(structuredClone(day))}>
+          Edit day
         </Btn>
         <Btn
-          variant="danger"
-          className="w-full"
+          variant="ghost"
+          className="text-rose-400"
           onClick={act(async () => {
-            if (!window.confirm(`Reset ${WEEKDAY_NAMES[wd]} to the original plan? Your edits to this day will be lost (workout history is not affected).`)) return
+            if (!window.confirm(`Reset ${WEEKDAY_NAMES[wd]} to the original plan? Your edits to this day will be lost. Workout history is not affected.`)) return
             const def = defaultRoutine().find((d) => d.weekday === wd)
             if (def) await db.routineDays.put(def)
-            toast('Day reset to default.')
+            toast('Day reset to the original plan.')
           })}
         >
-          Reset day to default
+          Reset
         </Btn>
       </div>
     </div>

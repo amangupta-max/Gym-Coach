@@ -63,6 +63,17 @@ def fill(page: Page, label: str, value: str):
     el.blur()
 
 
+def hide_timer(page: Page):
+    """The rest dock covers the lower screen; collapse it to the pill like a user would."""
+    expect(page.get_by_label("Hide timer")).to_be_visible()
+    page.get_by_label("Hide timer").click()
+    expect(page.get_by_label("Show timer")).to_be_visible()
+
+
+def goto_exercise(page: Page, n: int):
+    page.get_by_role("button", name=re.compile(rf"^Exercise {n}:")).click()
+
+
 def remaining_ms(page: Page) -> int:
     return int(page.get_attribute('[data-testid=timer-remaining]', "data-remaining-ms"))
 
@@ -75,7 +86,7 @@ with sync_playwright() as p:
     page = ctx.pages[0] if ctx.pages else ctx.new_page()
     attach(page, errors)
     page.goto(URL)
-    expect(page.get_by_role("heading", name="Gym Companion")).to_be_visible()
+    expect(page.get_by_role("navigation", name="Main")).to_be_visible()
 
     # ── TEST 1: open Monday's workout and start it ──
     page.goto(URL + "#/routine/1")
@@ -119,9 +130,12 @@ with sync_playwright() as p:
     time.sleep(1.0)
     r4 = remaining_ms(page)
     page.get_by_role("button", name="Resume").click()
+    hide_timer(page)
     check("T4b timer +30s / pause holds time", r2 > rem + 25_000 and abs(r3 - r4) < 50, f"after+30={r2} paused={r3}->{r4}")
     page.get_by_label("Complete set 2").click()
+    hide_timer(page)
     page.get_by_label("Complete set 3").click()
+    hide_timer(page)
     expect(page.locator("[data-testid=set-row-3]")).to_have_attribute("data-status", "completed")
     statuses = [page.get_attribute(f"[data-testid=set-row-{n}]", "data-status") for n in (1, 2, 3)]
     check("T4c each set recorded independently", statuses == ["completed"] * 3, str(statuses))
@@ -130,6 +144,7 @@ with sync_playwright() as p:
     expect(page.locator("[data-testid=set-row-3]")).to_have_attribute("data-status", "pending")
     page.get_by_label("Complete set 3").click()
     expect(page.locator("[data-testid=set-row-3]")).to_have_attribute("data-status", "completed")
+    hide_timer(page)
 
     # ── TEST 5: background / kill the page, come back later, timer still accurate ──
     before = remaining_ms(page)
@@ -153,12 +168,14 @@ with sync_playwright() as p:
     check("T6 refresh preserves sets", vals == [("30", "12"), ("35", "10"), ("35", "9")] and statuses == ["completed"] * 3, f"{vals} {statuses}")
 
     # do a bit more: exercise 2 one set, skip exercise 3
-    page.get_by_role("button", name="Next ›").click()
+    hide_timer(page)
+    page.get_by_role("button", name="Next", exact=True).click()
     expect(page.get_by_test_id("exercise-name")).to_have_text("Incline Dumbbell Press")
     fill(page, "Set 1 weight", "20")
     fill(page, "Set 1 reps", "10")
     page.get_by_label("Complete set 1").click()
-    page.get_by_role("button", name="Next ›").click()
+    hide_timer(page)
+    page.get_by_role("button", name="Next", exact=True).click()
     expect(page.get_by_test_id("exercise-name")).to_have_text("Machine Shoulder Press")
     page.get_by_role("button", name="Skip exercise").click()
     expect(page.get_by_test_id("exercise-name")).to_have_text("Cable Lateral Raise")
@@ -173,7 +190,7 @@ with sync_playwright() as p:
     expect(page.get_by_test_id("unfinished-card")).to_be_visible()
     page.get_by_role("button", name="Resume workout").click()
     expect(page.get_by_test_id("exercise-name")).to_have_text("Cable Lateral Raise")
-    page.get_by_role("button", name="1", exact=True).click()
+    goto_exercise(page, 1)
     expect(page.get_by_test_id("exercise-name")).to_have_text("Seated Chest Press Machine")
     statuses = [page.get_attribute(f"[data-testid=set-row-{n}]", "data-status") for n in (1, 2, 3)]
     check("T7 browser restart recovers unfinished workout", statuses == ["completed"] * 3, str(statuses))
@@ -189,7 +206,7 @@ with sync_playwright() as p:
     page.get_by_test_id("save-finish").click()
     page.wait_for_url(re.compile(r"#/history/"))
     page.goto(URL + "#/history")
-    items = page.get_by_test_id("history-list").locator("li")
+    items = page.get_by_test_id("history-list").locator("a")
     expect(items).to_have_count(1)
     check("T8 completed workout appears in history", items.count() == 1 and "Push" in items.first.inner_text(), items.first.inner_text())
     page.goto(URL)
@@ -199,15 +216,16 @@ with sync_playwright() as p:
     page.goto(URL + "#/routine/1")
     page.click("[data-testid=start-day]")
     expect(page.get_by_test_id("exercise-name")).to_have_text("Barbell Bench Press")
-    expect(page.get_by_test_id("previous-performance")).not_to_contain_text("Loading")
+    expect(page.get_by_test_id("previous-performance")).to_contain_text(re.compile("Last time|No previous"))
     prev_bench = page.get_by_test_id("previous-performance").inner_text()
     page.click("[data-testid=replace-button]")
     expect(page.locator("[data-testid=alt-seated-chest-press-machine]")).not_to_contain_text("Checking history")
     alt_text = page.locator("[data-testid=alt-seated-chest-press-machine]").inner_text()
     page.click("[data-testid=alt-seated-chest-press-machine]")
     expect(page.get_by_test_id("exercise-name")).to_have_text("Seated Chest Press Machine")
-    expect(page.get_by_test_id("previous-performance")).to_contain_text("Previous workout")
-    prev_machine = page.get_by_test_id("previous-performance").inner_text()
+    expect(page.get_by_test_id("previous-performance")).to_contain_text("Last time")
+    expect(page.get_by_test_id("set-row-1")).to_contain_text("Last 30 kg × 12")
+    prev_machine = " | ".join(page.get_by_test_id(f"set-row-{n}").inner_text().replace("\n", " ") for n in (1, 2, 3))
     pre = [page.get_by_label(f"Set {n} weight", exact=True).input_value() for n in (1, 2, 3)]
     check(
         "T9 previous machine performance shown + weights pre-filled (not increased)",
@@ -215,10 +233,11 @@ with sync_playwright() as p:
         f"prefill={pre}",
     )
     check("T9b replace sheet shows alternative's last performance", "30 kg × 12" in alt_text, alt_text.replace("\n", " | "))
-    page.get_by_role("button", name="2", exact=True).click()
+    goto_exercise(page, 2)
     expect(page.get_by_test_id("exercise-name")).to_have_text("Incline Dumbbell Press")
-    expect(page.get_by_test_id("previous-performance")).to_contain_text("Previous workout")
-    prev_incline = page.get_by_test_id("previous-performance").inner_text()
+    expect(page.get_by_test_id("previous-performance")).to_contain_text("Last time")
+    expect(page.get_by_test_id("set-row-1")).to_contain_text("Last")
+    prev_incline = page.get_by_test_id("set-row-1").inner_text()
     check("T9c other exercises show previous too", "20 kg × 10" in prev_incline, prev_incline.replace("\n", " | "))
     shot(page, "next-week")
 
@@ -247,9 +266,9 @@ with sync_playwright() as p:
     page.click("[data-testid=cardio-log-treadmill-warmup]")
     page.get_by_label("Distance km").fill("1.05")
     page.click("[data-testid=cardio-save-done]")
-    expect(page.get_by_test_id("cardio-status-treadmill-warmup")).to_have_text("✓ Completed")
+    expect(page.get_by_test_id("cardio-status-treadmill-warmup")).to_have_text("Done")
     check("Cardio logged as completed", True)
-    page.goto(URL + "#/progress")
+    page.goto(URL + "#/body")
     page.get_by_label("Body weight value").fill("82.4")
     page.get_by_label("Body weight value").press("Enter")
     expect(page.locator("text=82.4").first).to_be_visible()
@@ -272,9 +291,8 @@ with sync_playwright() as p:
     page.get_by_role("button", name="Delete all data").click()  # prompt answered with DELETE
     page.wait_for_timeout(800)
     page.goto(URL + "#/history")
-    page.wait_for_selector("text=Workout History")
-    page.wait_for_timeout(500)
-    wiped = page.locator("text=No completed workouts yet").count() == 1
+    page.wait_for_selector("text=Saved workouts show up here.")
+    wiped = page.locator("text=Saved workouts show up here.").count() == 1
     page.goto(URL + "#/settings")
     page.set_input_files("[data-testid=restore-input]", backup_path)
     expect(page.get_by_test_id("restore-confirm")).to_be_visible()
@@ -282,15 +300,14 @@ with sync_playwright() as p:
     page.wait_for_timeout(1000)
     page.goto(URL + "#/history")
     page.get_by_test_id("history-list").wait_for()
-    restored = page.get_by_test_id("history-list").locator("li").count()
+    restored = page.get_by_test_id("history-list").locator("a").count()
     page.goto(URL)
-    page.get_by_test_id("today-name").or_(page.locator("text=Rest day")).first.wait_for()
-    page.wait_for_timeout(500)
+    page.get_by_test_id("unfinished-card").wait_for(timeout=5000)
     unfinished_back = page.get_by_test_id("unfinished-card").count()
     page.goto(URL + "#/cardio")
     expect(page.get_by_test_id("cardio-status-treadmill-warmup")).not_to_have_text("Not logged yet")
     cardio_back = page.get_by_test_id("cardio-status-treadmill-warmup").inner_text()
-    check("T10 wipe then restore from JSON", wiped and restored == 1 and unfinished_back == 1 and cardio_back == "✓ Completed", f"wiped={wiped} history={restored} unfinished={unfinished_back} cardio={cardio_back}")
+    check("T10 wipe then restore from JSON", wiped and restored == 1 and unfinished_back == 1 and cardio_back == "Done", f"wiped={wiped} history={restored} unfinished={unfinished_back} cardio={cardio_back}")
 
     # ── TEST 11: offline ──
     page.goto(URL)
@@ -298,7 +315,7 @@ with sync_playwright() as p:
     page.wait_for_function("navigator.serviceWorker && navigator.serviceWorker.controller !== null", timeout=15000)
     ctx.set_offline(True)
     page.reload()
-    expect(page.get_by_role("heading", name="Gym Companion")).to_be_visible()
+    expect(page.get_by_role("navigation", name="Main")).to_be_visible()
     page.goto(URL + "#/library")
     page.wait_for_timeout(500)
     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
@@ -318,7 +335,8 @@ with sync_playwright() as p:
     page.goto(URL)
     page.get_by_role("button", name="Resume workout").click()
     expect(page.get_by_test_id("exercise-name")).to_be_visible()
-    page.get_by_role("button", name="2", exact=True).click()
+    goto_exercise(page, 2)
+    expect(page.get_by_test_id("exercise-name")).to_have_text("Incline Dumbbell Press")
     fill(page, "Set 1 reps", "11")
     page.get_by_label("Complete set 1").click()
     expect(page.locator("[data-testid=set-row-1]")).to_have_attribute("data-status", "completed")

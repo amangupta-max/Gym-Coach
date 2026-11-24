@@ -14,11 +14,11 @@ const root = createRoot(document.getElementById('root')!)
 function fatal(message: string, detail?: unknown) {
   console.error(message, detail)
   root.render(
-    <div style={{ padding: 24, fontFamily: 'system-ui', maxWidth: 520, margin: '0 auto' }}>
+    <div style={{ padding: 24, fontFamily: 'system-ui', maxWidth: 520, margin: '0 auto', color: '#edeaf6' }}>
       <h1 style={{ fontSize: 20, fontWeight: 700 }}>Gym Companion could not start</h1>
       <p style={{ marginTop: 8 }}>{message}</p>
-      <pre style={{ marginTop: 8, whiteSpace: 'pre-wrap', fontSize: 12, background: '#f1f5f9', padding: 8 }}>{String(detail ?? '')}</pre>
-      <button style={{ marginTop: 12, padding: '10px 16px', border: '1px solid #cbd5e1', borderRadius: 8 }} onClick={() => location.reload()}>
+      <pre style={{ marginTop: 8, whiteSpace: 'pre-wrap', fontSize: 12, background: '#100c1a', padding: 8, borderRadius: 8 }}>{String(detail ?? '')}</pre>
+      <button style={{ marginTop: 12, padding: '10px 16px', border: 0, borderRadius: 999, background: '#6620d0', color: 'white' }} onClick={() => location.reload()}>
         Reload
       </button>
     </div>,

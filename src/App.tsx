@@ -7,7 +7,7 @@ import Cardio from './pages/Cardio'
 import { HistoryDetail, HistoryList } from './pages/History'
 import Home from './pages/Home'
 import { ExerciseDetail, LibraryList } from './pages/Library'
-import Progress from './pages/Progress'
+import Progress, { BodyPage } from './pages/Progress'
 import { RoutineDayPage, RoutineList } from './pages/Routine'
 import Settings from './pages/Settings'
 import WorkoutSummary from './pages/WorkoutSummary'
@@ -26,6 +26,7 @@ const router = createHashRouter([
       { path: '/history', element: <HistoryList /> },
       { path: '/history/:id', element: <HistoryDetail /> },
       { path: '/progress', element: <Progress /> },
+      { path: '/body', element: <BodyPage /> },
       { path: '/cardio', element: <Cardio /> },
       { path: '/settings', element: <Settings /> },
     ],

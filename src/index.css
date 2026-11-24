@@ -1,25 +1,139 @@
+@import "@fontsource-variable/archivo/standard.css";
 @import "tailwindcss";
 
-html {
-  -webkit-tap-highlight-color: transparent;
+/*
+ * Gym Companion design tokens.
+ * ink  = purple-tinted blacks (surfaces, text)
+ * iris = deep purple (actions, progress, completion)
+ * orchid = the warm end of the purple gradients (rest timer, records)
+ */
+@theme {
+  --font-sans: "Archivo Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-ink-1000: #050308;
+  --color-ink-950: #0a0712;
+  --color-ink-900: #100c1a;
+  --color-ink-850: #161124;
+  --color-ink-800: #1d172f;
+  --color-ink-700: #2a2242;
+  --color-ink-600: #3b3158;
+  --color-ink-500: #554875;
+  --color-ink-400: #7a6e9b;
+  --color-ink-300: #a59cc0;
+  --color-ink-200: #cfc9e2;
+  --color-ink-100: #edeaf6;
+
+  --color-iris-950: #1a0736;
+  --color-iris-900: #2a0b58;
+  --color-iris-800: #3c1080;
+  --color-iris-700: #5016a8;
+  --color-iris-600: #6620d0;
+  --color-iris-500: #7f42ee;
+  --color-iris-400: #9d6ff5;
+  --color-iris-300: #bea0fa;
+  --color-iris-200: #dccbfd;
+  --color-iris-100: #f1eaff;
+
+  --color-orchid-500: #b03bd0;
+  --color-orchid-300: #d77be8;
+  --color-rose-400: #ff5c7a;
+
+  --text-2xs: 0.75rem;
+  --text-2xs--line-height: 1rem;
 }
-body {
-  @apply bg-slate-50 text-slate-900 antialiased;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  overscroll-behavior-y: contain;
+
+/* Gradients: each one has a single job. */
+@utility bg-aura {
+  /* page glow behind the top of Today and workout screens */
+  background-image: radial-gradient(120% 55% at 50% -5%, rgb(102 32 208 / 0.42), rgb(102 32 208 / 0.08) 55%, transparent 75%);
 }
-input,
-select,
-textarea,
-button {
-  font-size: 16px;
+@utility bg-drive {
+  /* primary actions and completed sets */
+  background-image: linear-gradient(135deg, #5016a8 0%, #7f42ee 100%);
 }
+@utility bg-pulse {
+  /* rest timer and personal records */
+  background-image: linear-gradient(165deg, #1a0736 0%, #3c1080 38%, #6620d0 72%, #b03bd0 100%);
+}
+@utility bg-dusk {
+  /* bottom sheets */
+  background-image: linear-gradient(180deg, #1d172f 0%, #100c1a 100%);
+}
+@utility bg-sheen {
+  /* a logged set row */
+  background-image: linear-gradient(90deg, rgb(102 32 208 / 0.28) 0%, rgb(102 32 208 / 0.06) 100%);
+}
+@utility text-drive {
+  background-image: linear-gradient(120deg, #bea0fa 0%, #d77be8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Numbers read like stamped plates: extra-wide, heavy, fixed-width digits. */
+@utility num {
+  font-stretch: 125%;
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+@utility display {
+  font-stretch: 118%;
+  font-weight: 720;
+  letter-spacing: -0.02em;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+    background: var(--color-ink-1000);
+  }
+  body {
+    background: transparent;
+    color: var(--color-ink-100);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: contain;
+  }
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+    font-size: 16px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-iris-400);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-iris-700);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+  }
+  summary {
+    cursor: pointer;
+  }
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
   scrollbar-width: none;
 }
-summary {
-  cursor: pointer;
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -36,8 +36,8 @@ export default defineConfig({
         scope: base,
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#f8fafc',
-        theme_color: '#0f172a',
+        background_color: '#050308',
+        theme_color: '#050308',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -46,7 +46,7 @@ export default defineConfig({
       },
       workbox: {
         // Precache the whole app INCLUDING every exercise image, so it works fully offline.
-        globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,svg,webp,json,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,svg,webp,json,webmanifest,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
