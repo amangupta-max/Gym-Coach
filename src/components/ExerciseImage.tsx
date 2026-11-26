@@ -1,12 +1,24 @@
-import { useState } from 'react'
+import { useState, type SyntheticEvent } from 'react'
 import type { Exercise } from '../db/types'
 import { useExerciseImages } from '../lib/hooks'
+import { exerciseImageUrl } from '../lib/util'
+
+/** If a photo can't load (e.g. offline and never opened before), show the placeholder instead of a broken image. */
+function fallback(e: SyntheticEvent<HTMLImageElement>) {
+  const img = e.currentTarget
+  const ph = exerciseImageUrl('placeholder.svg')
+  if (!img.src.endsWith('placeholder.svg')) {
+    img.src = ph
+    img.style.background = '#1d172f'
+  }
+}
 
 export function ExerciseThumb({ exercise, size = 56 }: { exercise: Exercise | undefined; size?: number }) {
-  const { urls, placeholder } = useExerciseImages(exercise)
+  const { thumb, placeholder } = useExerciseImages(exercise)
   return (
     <img
-      src={urls[0]}
+      src={thumb}
+      onError={fallback}
       alt=""
       width={size}
       height={size}
@@ -33,6 +45,7 @@ export function ExerciseImage({ exercise }: { exercise: Exercise }) {
           src={urls[idx]}
           alt={placeholder ? 'No verified image available' : `${exercise.name} demonstration${urls.length > 1 ? `, position ${idx + 1}` : ''}`}
           className={`mx-auto max-h-72 w-full object-contain ${placeholder ? 'opacity-50' : ''}`}
+          onError={fallback}
           data-testid="exercise-image"
         />
         {urls.length > 1 && (

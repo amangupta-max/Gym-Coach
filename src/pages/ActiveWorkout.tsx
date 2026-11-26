@@ -2,17 +2,18 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ExerciseImage, ExerciseThumb } from '../components/ExerciseImage'
-import { IconBook, IconCheck, IconChevronLeft, IconChevronRight, IconPlus, IconSearch, IconSwap, IconX } from '../components/icons'
+import { IconBook, IconCheck, IconChevronLeft, IconChevronRight, IconPlus, IconSwap, IconX } from '../components/icons'
 import { RestTimerPanel } from '../components/RestTimer'
-import { act, Btn, fieldClass, Modal, NumberInput, Stat, toastError } from '../components/ui'
+import { ExercisePicker } from '../components/ExercisePicker'
+import { act, Btn, Loading, Modal, NumberInput, Stat, toastError } from '../components/ui'
 import { db } from '../db/db'
 import type { Exercise, LogType, Session, SessionExercise, SessionSet } from '../db/types'
 import { setKeepAwake, unlockAudio } from '../lib/device'
 import { useExercises, useNow, useSettings } from '../lib/hooks'
 import { addSet, completeSet, goToExercise, removeSet, replaceExercise, setSkipExercise, skipSet, undoSet, updateSetValues } from '../lib/session'
-import { exerciseStats, previousPerformance, type PerfSet } from '../lib/stats'
+import { exerciseStats, type PerfSet } from '../lib/stats'
 import { startTimer } from '../lib/timer'
-import { byName, fmtDate, fmtDuration, fmtRest, rangeText, setLabel, weightColumn } from '../lib/util'
+import { fmtDate, fmtDuration, fmtRest, rangeText, setLabel, weightColumn } from '../lib/util'
 
 export default function ActiveWorkout() {
   const { id = '' } = useParams()
@@ -28,7 +29,7 @@ export default function ActiveWorkout() {
     return () => setKeepAwake(false)
   }, [settings.keepScreenAwake])
 
-  if (session === undefined || !exMap) return null
+  if (session === undefined || !exMap) return <Loading label="Loading workout…" />
   if (session === null || session.status === 'completed')
     return (
       <div className="p-6">
@@ -58,7 +59,7 @@ export default function ActiveWorkout() {
   return (
     <div className={`relative min-h-dvh ${dock === true ? 'pb-[22rem]' : 'pb-44'}`}>
       <div className="bg-aura pointer-events-none absolute inset-x-0 top-0 -z-10 h-96" />
-      <header className="sticky top-0 z-20 bg-ink-1000/80 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 backdrop-blur-md">
+      <header className="sticky top-0 z-20 bg-ink-1000/[0.97] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2">
         <div className="flex items-center justify-between gap-2">
           <Link to="/" aria-label="Back to Today" className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-300 active:bg-ink-800">
             <IconX />
@@ -246,7 +247,7 @@ function ExercisePanel({
       {sx.alternatives.length > 0 && <p className="mt-2 px-1 text-[13px] text-ink-500">Planned alternative: {sx.alternatives.map((a) => exMap.get(a)?.name ?? a).join(', ')}</p>}
 
       {/* Bottom action bar */}
-      <div className={`fixed inset-x-0 bottom-0 z-30 mx-auto max-w-lg border-t border-ink-800 bg-ink-1000/90 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md ${dockOpen ? 'invisible' : ''}`}>
+      <div className={`fixed inset-x-0 bottom-0 z-30 mx-auto max-w-lg border-t border-ink-800 bg-ink-1000/[0.97] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${dockOpen ? 'invisible' : ''}`}>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -310,9 +311,9 @@ export function Instructions({ ex }: { ex: Exercise }) {
   return (
     <div className="mt-5 space-y-6">
       {ex.description && <p className="text-[15px] leading-relaxed text-ink-300">{ex.description}</p>}
-      {block('Steps', ex.instructions, true)}
-      {block('Form tips', ex.formTips)}
-      {block('Common mistakes', ex.commonMistakes)}
+      {ex.instructions.length > 0 && block('Steps', ex.instructions, true)}
+      {ex.formTips.length > 0 && block('Form tips', ex.formTips)}
+      {ex.commonMistakes.length > 0 && block('Common mistakes', ex.commonMistakes)}
     </div>
   )
 }
@@ -408,35 +409,7 @@ export function SetRow({
   )
 }
 
-function AltOption({ exercise, onPick, tag }: { exercise: Exercise; onPick: () => void; tag?: string }) {
-  const prev = useLiveQuery(() => previousPerformance(exercise.id), [exercise.id])
-  return (
-    <li>
-      <button type="button" onClick={onPick} className="flex w-full items-center gap-3 rounded-2xl bg-ink-850 p-3 text-left active:bg-ink-800" data-testid={`alt-${exercise.id}`}>
-        <ExerciseThumb exercise={exercise} size={52} />
-        <span className="min-w-0 flex-1">
-          <span className="flex items-baseline justify-between gap-2">
-            <span className="font-semibold text-ink-100">{exercise.name}</span>
-            {tag && <span className="shrink-0 text-[12px] text-iris-300">{tag}</span>}
-          </span>
-          <span className="block text-[14px] text-ink-300">
-            {exercise.primaryMuscles.join(', ')}, {exercise.equipment.join(', ').toLowerCase()}
-          </span>
-          <span className="block text-[13px] text-ink-400">
-            {prev === undefined
-              ? 'Checking history…'
-              : prev
-                ? `Last ${fmtDate(prev.date)}: ${prev.sets.map((s) => setLabel(s.weight, s.reps, exercise.logType)).join(', ')}`
-                : 'No history yet'}
-          </span>
-        </span>
-      </button>
-    </li>
-  )
-}
-
 function ReplaceSheet({ open, onClose, session, idx, sx, exMap }: { open: boolean; onClose: () => void; session: Session; idx: number; sx: SessionExercise; exMap: Map<string, Exercise> }) {
-  const [q, setQ] = useState('')
   const current = exMap.get(sx.exerciseId)
   const planned = exMap.get(sx.plannedExerciseId)
 
@@ -447,52 +420,35 @@ function ReplaceSheet({ open, onClose, session, idx, sx, exMap }: { open: boolea
     return Array.from(ids)
       .map((i) => exMap.get(i))
       .filter((e): e is Exercise => !!e)
+      .slice(0, 6)
   }, [sx, planned, current, exMap])
-
-  const others = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    if (!s) return []
-    const skip = new Set([sx.exerciseId, ...suggested.map((e) => e.id)])
-    return Array.from(exMap.values())
-      .filter((e) => !skip.has(e.id) && (e.name.toLowerCase().includes(s) || e.targetMuscle.toLowerCase().includes(s)))
-      .sort(byName)
-      .slice(0, 30)
-  }, [q, exMap, sx.exerciseId, suggested])
+  const exclude = useMemo(() => [sx.exerciseId], [sx.exerciseId])
 
   const pick = (id: string) => {
     replaceExercise(session.id, idx, id)
-      .then(() => {
-        onClose()
-        setQ('')
-      })
+      .then(onClose)
       .catch(toastError)
   }
   const hasCompleted = sx.sets.some((s) => s.status === 'completed')
 
   return (
-    <Modal open={open} onClose={onClose} title="Swap exercise">
-      <p className="mb-4 text-[15px] leading-snug text-ink-300">
-        Only today changes. Sets are saved under the exercise you actually do.
-        {hasCompleted && ' Sets already logged stay with the current exercise.'}
-      </p>
-      {suggested.length > 0 && (
-        <ul className="space-y-2">
-          {suggested.map((e) => (
-            <AltOption key={e.id} exercise={e} onPick={() => pick(e.id)} tag={e.id === sx.plannedExerciseId ? 'Back to planned' : sx.alternatives.includes(e.id) ? 'Planned alternative' : undefined} />
-          ))}
-        </ul>
-      )}
-      <div className="relative mt-5">
-        <IconSearch size={19} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-500" />
-        <input className={`${fieldClass} pl-11`} placeholder="Search all exercises" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search exercises" />
-      </div>
-      {others.length > 0 && (
-        <ul className="mt-3 space-y-2">
-          {others.map((e) => (
-            <AltOption key={e.id} exercise={e} onPick={() => pick(e.id)} />
-          ))}
-        </ul>
-      )}
+    <Modal open={open} onClose={onClose} title={`Swap ${current?.name ?? 'exercise'}`}>
+      <ExercisePicker
+        key={`${sx.id}-${open}`}
+        exMap={exMap}
+        onPick={pick}
+        pickLabel="Swap to this"
+        exclude={exclude}
+        suggested={suggested}
+        suggestedTag={(e) => (e.id === sx.plannedExerciseId ? 'Back to planned' : sx.alternatives.includes(e.id) ? 'Planned alternative' : undefined)}
+        defaultMuscle={current?.targetMuscle ?? ''}
+        intro={
+          <p className="mb-4 text-[15px] leading-snug text-ink-300">
+            Only today changes. Sets are saved under the exercise you actually do.
+            {hasCompleted && ' Sets already logged stay with the current exercise.'}
+          </p>
+        }
+      />
     </Modal>
   )
 }

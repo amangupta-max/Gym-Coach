@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Link, useNavigate, useParams } from 'react-router'
 import { IconChevronLeft } from '../components/icons'
-import { Btn, Group, Stat, toast, toastError } from '../components/ui'
+import { Btn, Group, Loading, Stat, toast, toastError } from '../components/ui'
 import { db } from '../db/db'
 import type { Exercise, Session } from '../db/types'
 import { useExercises, useNow } from '../lib/hooks'
@@ -128,7 +128,7 @@ export default function WorkoutSummary() {
   const session = useLiveQuery(() => db.sessions.get(id).then((s) => s ?? null), [id])
   const exMap = useExercises()
   const now = useNow(30000)
-  if (session === undefined || !exMap) return null
+  if (session === undefined || !exMap) return <Loading label="Loading summary…" />
   if (session === null)
     return (
       <p className="p-6">

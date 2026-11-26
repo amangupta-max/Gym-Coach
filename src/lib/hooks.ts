@@ -58,7 +58,7 @@ export function useExercises(): Map<string, Exercise> | undefined {
 }
 
 /** Image URLs for an exercise: the user's own photo wins, then bundled images, else placeholder. */
-export function useExerciseImages(ex: Exercise | undefined): { urls: string[]; custom: boolean; placeholder: boolean } {
+export function useExerciseImages(ex: Exercise | undefined): { urls: string[]; thumb: string; custom: boolean; placeholder: boolean } {
   const custom = useLiveQuery(() => (ex ? db.customImages.get(ex.id) : undefined), [ex?.id])
   const [objUrl, setObjUrl] = useState<string | null>(null)
   useEffect(() => {
@@ -70,7 +70,11 @@ export function useExerciseImages(ex: Exercise | undefined): { urls: string[]; c
     setObjUrl(u)
     return () => URL.revokeObjectURL(u)
   }, [custom])
-  if (objUrl) return { urls: [objUrl], custom: true, placeholder: false }
-  if (ex && ex.images.length) return { urls: ex.images.map(exerciseImageUrl), custom: false, placeholder: false }
-  return { urls: [exerciseImageUrl('placeholder.svg')], custom: false, placeholder: true }
+  if (objUrl) return { urls: [objUrl], thumb: objUrl, custom: true, placeholder: false }
+  if (ex && ex.images.length) {
+    const urls = ex.images.map(exerciseImageUrl)
+    return { urls, thumb: ex.thumb ? exerciseImageUrl(ex.thumb) : urls[0], custom: false, placeholder: false }
+  }
+  const ph = exerciseImageUrl('placeholder.svg')
+  return { urls: [ph], thumb: ph, custom: false, placeholder: true }
 }

@@ -1,5 +1,5 @@
 import { createHashRouter, Navigate, RouterProvider } from 'react-router'
-import { ErrorBoundary, FocusLayout, Layout } from './components/Layout'
+import { ErrorBoundary, FocusLayout, Layout, UpdateBanner } from './components/Layout'
 import { TimerWatcher } from './components/RestTimer'
 import { Toaster } from './components/ui'
 import ActiveWorkout from './pages/ActiveWorkout'
@@ -46,6 +46,7 @@ export default function App() {
     <ErrorBoundary>
       <TimerWatcher />
       <Toaster />
+      <UpdateBanner />
       <RouterProvider router={router} />
     </ErrorBoundary>
   )

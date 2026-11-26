@@ -25,3 +25,6 @@ dist-ssr
 
 # Python test cache
 __pycache__/
+
+# Library photos are downloaded at build time (npm run images)
+public/exercise-images/lib/

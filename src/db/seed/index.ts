@@ -1,7 +1,7 @@
 import { db, getKV, setKV } from '../db'
-import { DEFAULT_SETTINGS, IDLE_TIMER, type Settings } from '../types'
+import { DEFAULT_SETTINGS, IDLE_TIMER, type Exercise, type Settings } from '../types'
 import { SEED_EXERCISES } from './exercises'
-import { defaultCardioPlans, defaultRoutine } from './routine'
+import { defaultCardioPlans, defaultRoutine, isUneditedV1, ROUTINE_VERSION } from './routine'
 
 /**
  * Bump when the built-in exercise library content changes (instructions,
@@ -9,6 +9,42 @@ import { defaultCardioPlans, defaultRoutine } from './routine'
  * They never touch workouts, logs, the user's routine or custom exercises.
  */
 export const SEED_VERSION = 1
+
+/**
+ * Bump when src/db/seed/library.json (the big exercise library) changes.
+ * The library is loaded as a separate chunk only when it needs (re)importing.
+ */
+export const LIBRARY_VERSION = 1
+
+type LibraryEntry = Omit<Exercise, 'formTips' | 'commonMistakes'> & { formTips?: string[]; commonMistakes?: string[] }
+
+function fromLibrary(x: LibraryEntry): Exercise {
+  return {
+    ...x,
+    formTips: x.formTips ?? [],
+    commonMistakes: x.commonMistakes ?? [],
+    imageCredit: x.source
+      ? {
+          source: 'free-exercise-db (yuhonas)',
+          sourceEntry: x.name,
+          url: `https://github.com/yuhonas/free-exercise-db/tree/main/exercises/${x.source.folder}`,
+          license: 'Unlicense (public domain), as declared by the dataset',
+        }
+      : undefined,
+  }
+}
+
+/** Adds or refreshes the big exercise library. Never touches custom exercises or any workout data. */
+async function ensureLibrary(): Promise<void> {
+  if ((await getKV<number>('libraryVersion', 0)) >= LIBRARY_VERSION) return
+  const { default: lib } = (await import('./library.json')) as { default: LibraryEntry[] }
+  await db.transaction('rw', [db.exercises, db.kv], async () => {
+    const existing = new Map((await db.exercises.toArray()).map((e) => [e.id, e]))
+    const rows = lib.map(fromLibrary).filter((e) => !existing.get(e.id)?.custom)
+    await db.exercises.bulkPut(rows)
+    await setKV('libraryVersion', LIBRARY_VERSION)
+  })
+}
 
 /**
  * Idempotent. Safe to run on every app start and after a restore.
@@ -32,6 +68,18 @@ export async function ensureSeed(): Promise<void> {
 
     if ((await db.routineDays.count()) === 0) {
       await db.routineDays.bulkAdd(defaultRoutine())
+      await setKV('routineVersion', ROUTINE_VERSION)
+    } else {
+      // Routine upgrades: only replace days the user never edited. Past workouts are never touched.
+      const routineVersion = await getKV<number>('routineVersion', 1)
+      if (routineVersion < 2) {
+        const fresh = defaultRoutine()
+        for (const wd of [5, 6] as const) {
+          const stored = await db.routineDays.get(wd)
+          if (stored && isUneditedV1(stored)) await db.routineDays.put(fresh.find((d) => d.weekday === wd)!)
+        }
+      }
+      if (routineVersion < ROUTINE_VERSION) await setKV('routineVersion', ROUTINE_VERSION)
     }
     if ((await db.cardioPlans.count()) === 0) {
       await db.cardioPlans.bulkAdd(defaultCardioPlans())
@@ -43,4 +91,5 @@ export async function ensureSeed(): Promise<void> {
     if (!(await db.kv.get('installedAt'))) await setKV('installedAt', Date.now())
     if (appliedVersion < SEED_VERSION) await setKV('seedVersion', SEED_VERSION)
   })
+  await ensureLibrary()
 }

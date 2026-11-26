@@ -35,6 +35,10 @@ export interface Exercise {
   alternatives: string[]
   /** File names inside /exercise-images/. Empty means use the placeholder. */
   images: string[]
+  /** Small square image for lists (library exercises); falls back to images[0] */
+  thumb?: string
+  /** Where a library exercise came from (used to build credits) */
+  source?: { folder: string; frames: string[] }
   imageCaption?: string
   imageCredit?: ImageCredit
   defaultSets: number

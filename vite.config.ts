@@ -47,7 +47,17 @@ export default defineConfig({
       workbox: {
         // Precache the whole app INCLUDING every exercise image, so it works fully offline.
         globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,svg,webp,json,webmanifest,woff2}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Library photos are big: list thumbnails (*-t.jpg) are stored on install so lists
+        // work offline; full-size library photos are saved the first time you open them.
+        globIgnores: ['**/exercise-images/lib/*-1.jpg', '**/exercise-images/lib/*-2.jpg'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.includes('/exercise-images/lib/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'library-photos', expiration: { maxEntries: 1200 } },
+          },
+        ],
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
       },

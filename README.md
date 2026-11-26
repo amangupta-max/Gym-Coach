@@ -21,7 +21,8 @@ Other commands:
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server with hot reload, reachable on your Wi‑Fi |
-| `npm run build` | Type-check and build the production app into `dist/` |
+| `npm run images` | Download and resize the library photos into `public/exercise-images/lib/` (first run needs internet; later runs skip existing files) |
+| `npm run build` | Fetch library photos if missing, type-check and build the production app into `dist/` |
 | `npm run preview` | Serve the built `dist/` on port 4173 (also on Wi‑Fi) |
 | `npm run typecheck` | TypeScript check only |
 
@@ -83,7 +84,8 @@ Four tabs at the bottom: **Today**, **Plan**, **Progress**, **Settings**.
 - **Weights are references, never prescriptions:** weight boxes are pre-filled (lighter text) from the same set last time, and each row shows "Last 35 kg × 10". The app never increases them. Reps are always typed by you.
 - **Rest timer:** logging a set opens the purple rest dock with a countdown ring, ±15 s, +30 s, *Set time*, pause, restart and *Skip rest*. *Hide* shrinks it to a pill so you can edit the next set.
 - **Finishing:** *Finish* shows the summary (duration, sets, reps, volume, skipped exercises, comparison with the last same workout). *Save workout* stores it. *Leave unfinished* keeps it resumable. Navigating away never finishes a workout.
-- **Plan:** *Week* lists each day; open one to start it, edit it (sets, reps, rest, order, alternatives, rest day) or reset it. *Exercises* is the 49 exercise library with search and muscle filters; *Use my own photo* replaces an image.
+- **Plan:** *Week* lists each day; open one to start it, edit it (sets, reps, rest, order, alternatives, rest day) or reset it. *Exercises* is the library of 625 exercises (49 hand-written with form tips, 575 from the public domain free-exercise-db, plus a Smith machine bicep curl) with search, muscle and equipment filters; *Use my own photo* replaces an image.
+- **Swap and adding exercises** open the same picker: suggested alternatives with your last performance, a search that understands gym slang ("hyperextension" finds back extensions, "rod curl" finds bar curls, "rdl" finds Romanian deadlifts), muscle and equipment filters, thumbnails, and a preview with the photo and steps before you choose.
 - **Progress:** *Overview* (workouts per week, exercise charts with date range, personal records), *History* (every saved workout, editable), *Body* (body weight and waist).
 - **Cardio:** from Today. Treadmill warm-up (10 min, incline 3.5, 6 km/h) and 45 min evening walk are preloaded. Nothing counts as done until you log it.
 
@@ -101,7 +103,8 @@ Four tabs at the bottom: **Today**, **Plan**, **Progress**, **Settings**.
 - **Storage can be cleared:** Chrome may evict site data under extreme storage pressure, and *Clear browsing data* or uninstalling deletes it. The app asks Chrome to mark storage as persistent (Settings shows the status), but **regular JSON backups are the real safety net**.
 - **No sync** between devices by design. Use backup/restore to move data.
 - **Dev over Wi‑Fi (http)** can't be installed or used offline; that needs the HTTPS link.
-- **Images:** 47 of 49 exercises have a verified public domain photo. Two show a placeholder (Dumbbell Romanian Deadlift, Single-Arm Machine Row). Three photos show a close variation and say so in a caption (seated cable lateral raise, band-assisted pull-up, floor crunch without weight). The photos come from a dataset that declares them public domain; see `docs/IMAGE_CREDITS.md`.
+- **Library photos:** list thumbnails are stored on the phone at install, so lists work offline. Full-size photos of the 575 library exercises are saved the first time you open each one; before that, offline shows a placeholder. Library exercises use the dataset's instructions and have no form tips or common mistakes.
+- **Images:** 47 of the 49 hand-written exercises have a verified public domain photo. Two show a placeholder (Dumbbell Romanian Deadlift, Single-Arm Machine Row), as does the Smith Machine Bicep Curl, which the dataset doesn't have. Three photos show a close variation and say so in a caption (seated cable lateral raise, band-assisted pull-up, floor crunch without weight). The photos come from a dataset that declares them public domain; see `docs/IMAGE_CREDITS.md`.
 - Charts are deliberately basic. Library exercise content is read-only in Phase 1 (except your own photo); routines are fully editable.
 - The JavaScript bundle is ~600 KB plus a 90 KB font, all precached once.
 

@@ -26,6 +26,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Reuse library photos from earlier builds
+        uses: actions/cache@v4
+        with:
+          path: public/exercise-images/lib
+          key: library-photos-${{ hashFiles('src/db/seed/library.json', 'scripts/fetch-library-images.mjs') }}
+          restore-keys: library-photos-
       - name: Work out the site path
         run: |
           REPO="${{ github.event.repository.name }}"
