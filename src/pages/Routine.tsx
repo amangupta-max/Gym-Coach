@@ -2,13 +2,14 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { ExerciseThumb } from '../components/ExerciseImage'
-import { IconChevronLeft, IconChevronRight, IconX } from '../components/icons'
-import { act, Btn, fieldClass, Group, NumberInput, PageTitle, Segmented, toast, toastError } from '../components/ui'
+import { ExercisePicker } from '../components/ExercisePicker'
+import { IconChevronLeft, IconChevronRight, IconPlus, IconX } from '../components/icons'
+import { act, Btn, fieldClass, Group, Modal, NumberInput, PageTitle, Segmented, toast, toastError } from '../components/ui'
 import { db } from '../db/db'
 import { defaultRoutine } from '../db/seed/routine'
 import type { Exercise, RoutineDay, RoutineItem, Weekday } from '../db/types'
 import { useExercises } from '../lib/hooks'
-import { byName, fmtRest, isoWeekday, rangeText, repUnit, uid, WEEKDAY_NAMES, WEEKDAY_SHORT } from '../lib/util'
+import { fmtRest, isoWeekday, rangeText, repUnit, uid, WEEKDAY_NAMES, WEEKDAY_SHORT } from '../lib/util'
 import { estimateMinutes, useStartWorkout } from './Home'
 
 export function PlanTabs() {
@@ -50,26 +51,32 @@ export function RoutineList() {
   )
 }
 
-function ExerciseSelect({ exMap, onPick, label, exclude = [] }: { exMap: Map<string, Exercise>; onPick: (id: string) => void; label: string; exclude?: string[] }) {
-  const list = Array.from(exMap.values())
-    .filter((e) => !exclude.includes(e.id))
-    .sort(byName)
+/** Button that opens the searchable exercise picker in a sheet. */
+function PickExerciseButton({ exMap, onPick, label, sheetTitle, pickLabel, exclude = [], defaultMuscle }: { exMap: Map<string, Exercise>; onPick: (id: string) => void; label: string; sheetTitle: string; pickLabel: string; exclude?: string[]; defaultMuscle?: string }) {
+  const [open, setOpen] = useState(false)
   return (
-    <select
-      className={fieldClass}
-      value=""
-      aria-label={label}
-      onChange={(e) => {
-        if (e.target.value) onPick(e.target.value)
-      }}
-    >
-      <option value="">{label}</option>
-      {list.map((e) => (
-        <option key={e.id} value={e.id}>
-          {e.name} ({e.targetMuscle})
-        </option>
-      ))}
-    </select>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-ink-700 text-[15px] font-semibold text-ink-300 active:bg-ink-850"
+      >
+        <IconPlus size={18} />
+        {label}
+      </button>
+      <Modal open={open} onClose={() => setOpen(false)} title={sheetTitle}>
+        <ExercisePicker
+          exMap={exMap}
+          pickLabel={pickLabel}
+          exclude={exclude}
+          defaultMuscle={defaultMuscle}
+          onPick={(id) => {
+            onPick(id)
+            setOpen(false)
+          }}
+        />
+      </Modal>
+    </>
   )
 }
 
@@ -137,7 +144,15 @@ function ItemEditor({
           ))}
         </div>
         <div className="mt-2">
-          <ExerciseSelect exMap={exMap} label="Add an alternative" exclude={[item.exerciseId, ...item.alternatives]} onPick={(id) => onChange({ ...item, alternatives: [...item.alternatives, id] })} />
+          <PickExerciseButton
+            exMap={exMap}
+            label="Add an alternative"
+            sheetTitle={`Alternative to ${ex?.name ?? 'this exercise'}`}
+            pickLabel="Add as alternative"
+            exclude={[item.exerciseId, ...item.alternatives]}
+            defaultMuscle={ex?.targetMuscle}
+            onPick={(id) => onChange({ ...item, alternatives: [...item.alternatives, id] })}
+          />
         </div>
       </div>
     </div>
@@ -195,9 +210,12 @@ export function RoutineDayPage() {
                 onRemove={() => window.confirm(`Remove ${exMap.get(item.exerciseId)?.name} from this day?`) && setDraft({ ...draft, items: draft.items.filter((_, j) => j !== i) })}
               />
             ))}
-            <ExerciseSelect
+            <PickExerciseButton
               exMap={exMap}
               label="Add an exercise to this day"
+              sheetTitle={`Add to ${draft.name}`}
+              pickLabel="Add to this day"
+              exclude={draft.items.map((i) => i.exerciseId)}
               onPick={(id) => {
                 const e = exMap.get(id)!
                 setDraft({
@@ -208,7 +226,7 @@ export function RoutineDayPage() {
             />
           </div>
         )}
-        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] mt-5 flex gap-2 bg-ink-1000/90 py-3 backdrop-blur">
+        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] mt-5 flex gap-2 bg-ink-1000/[0.97] py-3">
           <Btn
             variant="primary"
             className="flex-1"

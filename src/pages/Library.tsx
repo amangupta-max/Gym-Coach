@@ -7,33 +7,41 @@ import { act, Btn, fieldClass, Group, PageTitle, Section, Stat, toast } from '..
 import { db } from '../db/db'
 import { useExercises } from '../lib/hooks'
 import { exerciseStats } from '../lib/stats'
-import { byName, fmtDate, fmtRest, rangeText, repUnit, setLabel } from '../lib/util'
+import { equipmentGroup, EQUIPMENT_ORDER, searchExercises } from '../lib/search'
+import { fmtDate, fmtRest, rangeText, repUnit, setLabel } from '../lib/util'
 import { Instructions } from './ActiveWorkout'
 import { PlanTabs } from './Routine'
+
+const PAGE = 60
 
 export function LibraryList() {
   const exMap = useExercises()
   const [q, setQ] = useState('')
   const [muscle, setMuscle] = useState('')
-  const list = useMemo(() => Array.from(exMap?.values() ?? []).sort(byName), [exMap])
+  const [equipment, setEquipment] = useState('')
+  const [limit, setLimit] = useState(PAGE)
+  const list = useMemo(() => Array.from(exMap?.values() ?? []), [exMap])
   const muscles = useMemo(() => Array.from(new Set(list.map((e) => e.targetMuscle))).sort(), [list])
+  const equipments = useMemo(() => EQUIPMENT_ORDER.filter((g) => list.some((e) => equipmentGroup(e) === g)), [list])
+  const filtered = useMemo(() => searchExercises(list, q, { muscle: muscle || undefined, equipment: equipment || undefined }), [list, q, muscle, equipment])
   if (!exMap) return null
-  const s = q.trim().toLowerCase()
-  const filtered = list.filter(
-    (e) =>
-      (!muscle || e.targetMuscle === muscle) &&
-      (!s || e.name.toLowerCase().includes(s) || e.equipment.join(' ').toLowerCase().includes(s) || e.primaryMuscles.join(' ').toLowerCase().includes(s)),
-  )
-  const chip = (label: string, value: string) => (
-    <button
-      key={label}
-      type="button"
-      onClick={() => setMuscle(value)}
-      aria-pressed={muscle === value}
-      className={`h-9 shrink-0 rounded-full px-4 text-[14px] font-medium ${muscle === value ? 'bg-iris-600 text-white' : 'bg-ink-900 text-ink-300'}`}
-    >
-      {label}
-    </button>
+  const chips = (items: string[], value: string, set: (v: string) => void, label: string) => (
+    <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4" role="group" aria-label={label}>
+      {['', ...items].map((v) => (
+        <button
+          key={v || 'all'}
+          type="button"
+          onClick={() => {
+            set(v)
+            setLimit(PAGE)
+          }}
+          aria-pressed={value === v}
+          className={`h-9 shrink-0 rounded-full px-4 text-[14px] font-medium ${value === v ? 'bg-iris-600 text-white' : 'bg-ink-900 text-ink-300'}`}
+        >
+          {v || 'All'}
+        </button>
+      ))}
+    </div>
   )
   return (
     <div>
@@ -41,28 +49,44 @@ export function LibraryList() {
       <PlanTabs />
       <div className="relative">
         <IconSearch size={19} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-500" />
-        <input className={`${fieldClass} pl-11`} placeholder={`Search ${list.length} exercises`} value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search exercises" />
+        <input
+          className={`${fieldClass} pl-11`}
+          type="search"
+          placeholder={`Search ${list.length} exercises`}
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value)
+            setLimit(PAGE)
+          }}
+          aria-label="Search exercises"
+        />
       </div>
-      <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4" role="group" aria-label="Filter by muscle">
-        {chip('All', '')}
-        {muscles.map((m) => chip(m, m))}
+      <div className="mt-3 space-y-2">
+        {chips(muscles, muscle, setMuscle, 'Filter by muscle')}
+        {chips(equipments, equipment, setEquipment, 'Filter by equipment')}
       </div>
+      <p className="mt-3 px-1 text-[13px] text-ink-500">{filtered.length} exercises</p>
       {filtered.length === 0 ? (
-        <p className="mt-6 text-center text-ink-400">No exercises match “{q}”.</p>
+        <p className="mt-6 text-center text-ink-400">Nothing matches. Try another word, or set the filters to All.</p>
       ) : (
-        <Group className="mt-4">
-          {filtered.map((e) => (
+        <Group className="mt-2">
+          {filtered.slice(0, limit).map((e) => (
             <Link key={e.id} to={`/library/${e.id}`} className="flex items-center gap-3 px-3 py-2.5 active:bg-ink-850">
               <ExerciseThumb exercise={e} size={48} />
               <span className="min-w-0">
                 <span className="block font-medium text-ink-100">{e.name}</span>
                 <span className="block truncate text-[14px] text-ink-400">
-                  {e.targetMuscle}, {e.equipment[0].toLowerCase()}
+                  {e.primaryMuscles.join(', ')}, {equipmentGroup(e).toLowerCase()}
                 </span>
               </span>
             </Link>
           ))}
         </Group>
+      )}
+      {filtered.length > limit && (
+        <Btn variant="secondary" className="mt-3 w-full" onClick={() => setLimit((l) => l + PAGE)}>
+          Show more ({filtered.length - limit} left)
+        </Btn>
       )}
     </div>
   )
