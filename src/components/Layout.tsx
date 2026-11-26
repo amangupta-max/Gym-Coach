@@ -15,7 +15,8 @@ const NAV = [
   { to: '/settings', label: 'Settings', icon: IconSettings, match: (p: string) => p.startsWith('/settings') },
 ]
 
-function UpdateBanner() {
+/** Mounted exactly once (in App) so the service worker is registered once and an update reloads the page once. */
+export function UpdateBanner() {
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     offlineReady: [offlineReady, setOfflineReady],
@@ -33,7 +34,7 @@ function UpdateBanner() {
   }, [offlineReady, setOfflineReady])
   if (!needRefresh) return null
   return (
-    <div className="mx-4 mt-3 flex items-center justify-between gap-3 rounded-2xl border border-iris-800 bg-iris-950 px-4 py-3 text-[15px]">
+    <div className="fixed inset-x-4 top-[max(0.75rem,env(safe-area-inset-top))] z-[65] mx-auto flex max-w-[calc(32rem-2rem)] items-center justify-between gap-3 rounded-2xl border border-iris-800 bg-iris-950 px-4 py-3 text-[15px] shadow-[0_12px_32px_rgb(0_0_0/0.6)]">
       <span className="text-ink-200">New version ready. Your data stays.</span>
       <div className="flex shrink-0 gap-1">
         <Btn small variant="ghost" onClick={() => setNeedRefresh(false)}>
@@ -74,13 +75,12 @@ export function Layout() {
     window.scrollTo(0, 0)
   }, [loc.pathname])
   return (
-    <div className="relative mx-auto flex min-h-dvh max-w-lg flex-col">
-      <UpdateBanner />
+    <div className="relative isolate mx-auto flex min-h-dvh max-w-lg flex-col">
       <main className="flex-1 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-40">
         <Outlet />
       </main>
       <ResumeBar />
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-800 bg-ink-1000/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md" aria-label="Main">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-800 bg-ink-1000/[0.97] pb-[env(safe-area-inset-bottom)]" aria-label="Main">
         <div className="mx-auto grid max-w-lg grid-cols-4">
           {NAV.map((n) => {
             const active = n.match(loc.pathname)
@@ -106,8 +106,7 @@ export function Layout() {
 /** Full-screen layout without bottom nav, for the active workout. */
 export function FocusLayout() {
   return (
-    <div className="mx-auto min-h-dvh max-w-lg">
-      <UpdateBanner />
+    <div className="relative isolate mx-auto min-h-dvh max-w-lg">
       <Outlet />
     </div>
   )

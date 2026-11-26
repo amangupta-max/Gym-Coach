@@ -57,6 +57,16 @@ export function PageTitle({ children, sub }: { children: ReactNode; sub?: ReactN
   )
 }
 
+/** Shows nothing for a moment (most loads are instant), then a quiet loading line. */
+export function Loading({ label = 'Loading…' }: { label?: string }) {
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), 400)
+    return () => clearTimeout(t)
+  }, [])
+  return <p className={`p-6 text-center text-[15px] text-ink-500 transition-opacity ${show ? 'opacity-100' : 'opacity-0'}`}>{label}</p>
+}
+
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="rounded-2xl border border-dashed border-ink-700 px-4 py-6 text-center text-[15px] text-ink-400">{children}</p>
 }
@@ -116,7 +126,7 @@ export function Modal({ open, onClose, title, children }: { open: boolean; onClo
   }, [open, onClose])
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink-1000/70 backdrop-blur-[2px]" onClick={onClose} role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink-1000/80" onClick={onClose} role="dialog" aria-modal="true" aria-label={title}>
       <div
         className="bg-dusk max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-[28px] border-t border-ink-700 px-5 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
         onClick={(e) => e.stopPropagation()}
@@ -168,7 +178,7 @@ export function Toaster() {
         <div
           key={t.id}
           role={t.kind === 'error' ? 'alert' : 'status'}
-          className="pointer-events-auto flex max-w-md items-center gap-2.5 rounded-full border border-ink-700 bg-ink-850/95 py-2.5 pr-4 pl-3 text-[15px] text-ink-100 shadow-[0_12px_32px_rgb(0_0_0/0.5)] backdrop-blur"
+          className="pointer-events-auto flex max-w-md items-center gap-2.5 rounded-full border border-ink-700 bg-ink-850 py-2.5 pr-4 pl-3 text-[15px] text-ink-100 shadow-[0_12px_32px_rgb(0_0_0/0.5)]"
         >
           <span className={`h-2 w-2 shrink-0 rounded-full ${t.kind === 'error' ? 'bg-rose-400' : t.kind === 'success' ? 'bg-iris-400' : 'bg-ink-400'}`} />
           {t.text}
