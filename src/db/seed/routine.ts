@@ -15,14 +15,21 @@ function items(prefix: string, slots: Slot[]): RoutineItem[] {
   }))
 }
 
+/**
+ * Routine versions.
+ * v1: Push, Pull, Legs, Rest, Upper Body, Lower Body + Core, Rest
+ * v2: Push, Pull, Legs, Rest, Shoulders + Arms, Chest + Back, Rest (legs once a week)
+ */
+export const ROUTINE_VERSION = 2
+
 export function defaultRoutine(): RoutineDay[] {
   const now = Date.now()
-  const day = (weekday: Weekday, name: string, focus: string, slots: Slot[] | null): RoutineDay => ({
+  const day = (weekday: Weekday, name: string, focus: string, slots: Slot[] | null, version = ''): RoutineDay => ({
     weekday,
     name,
     focus,
     isRest: slots === null,
-    items: slots ? items(`d${weekday}`, slots) : [],
+    items: slots ? items(`${version}d${weekday}`, slots) : [],
     updatedAt: now,
   })
   return [
@@ -51,25 +58,24 @@ export function defaultRoutine(): RoutineDay[] {
       ['standing-calf-raise', 3, 12, 15, 60, ['seated-calf-raise']],
     ]),
     day(4, 'Rest', 'Recovery', null),
-    day(5, 'Upper Body', 'Chest, back, shoulders and arms', [
-      ['incline-chest-press-machine', 3, 10, 12, 90, ['incline-dumbbell-press']],
-      ['close-grip-lat-pulldown', 3, 10, 12, 90, ['assisted-pull-up']],
-      ['single-arm-cable-row', 2, 12, 12, 60, ['single-arm-machine-row'], true],
+    day(5, 'Shoulders + Arms', 'Shoulders, biceps, triceps and core', [
+      ['seated-dumbbell-shoulder-press', 3, 8, 12, 90, ['machine-shoulder-press']],
       ['dumbbell-lateral-raise', 3, 12, 15, 60, ['cable-lateral-raise']],
-      ['reverse-pec-deck', 2, 12, 15, 60, ['cable-rear-delt-fly']],
-      ['ez-bar-curl', 2, 10, 12, 60, ['dumbbell-bicep-curl']],
-      ['straight-bar-pushdown', 2, 12, 15, 60, ['triceps-rope-pushdown']],
-    ]),
-    day(6, 'Lower Body + Core', 'Glutes, quads, hamstrings, calves and core', [
-      ['bulgarian-split-squat', 3, 10, 10, 90, ['reverse-lunge'], true],
-      ['hip-thrust', 3, 10, 12, 90, ['glute-bridge']],
-      ['seated-leg-curl', 3, 12, 15, 60, ['lying-leg-curl']],
-      ['leg-extension', 2, 12, 15, 60, []],
-      ['seated-calf-raise', 3, 15, 20, 60, ['standing-calf-raise']],
+      ['reverse-pec-deck', 2, 12, 15, 60, ['cable-rear-delt-fly', 'face-pull']],
+      ['ez-bar-curl', 3, 10, 12, 60, ['dumbbell-bicep-curl']],
+      ['straight-bar-pushdown', 3, 10, 15, 60, ['triceps-rope-pushdown']],
+      ['rope-hammer-curl', 2, 10, 12, 60, ['hammer-curl']],
       ['cable-crunch', 3, 12, 15, 60, ['weighted-floor-crunch']],
       ['plank', 3, 30, 45, 45, []],
-      ['hanging-knee-raise', 2, 10, 15, 60, ['reverse-crunch']],
-    ]),
+    ], 'r2'),
+    day(6, 'Chest + Back', 'Chest and back', [
+      ['incline-chest-press-machine', 3, 10, 12, 90, ['incline-dumbbell-press']],
+      ['close-grip-lat-pulldown', 3, 10, 12, 90, ['lat-pulldown', 'assisted-pull-up']],
+      ['seated-chest-press-machine', 3, 10, 12, 90, ['barbell-bench-press']],
+      ['seated-machine-row', 3, 10, 12, 90, ['seated-cable-row']],
+      ['single-arm-cable-row', 2, 12, 12, 60, ['single-arm-machine-row', 'one-arm-dumbbell-row'], true],
+      ['pec-deck', 2, 12, 15, 60, []],
+    ], 'r2'),
     day(7, 'Rest', 'Recovery', null),
   ]
 }
@@ -95,4 +101,49 @@ export function defaultCardioPlans(): CardioPlan[] {
       durationMin: 45,
     },
   ]
+}
+
+/**
+ * Friday and Saturday exactly as v1 shipped them. Used only to tell whether
+ * the user has edited those days before the v2 upgrade replaces them.
+ */
+export const V1_FRI_SAT: Record<5 | 6, Pick<RoutineDay, 'name' | 'focus' | 'isRest' | 'items'>> = {
+  5: {
+    name: 'Upper Body',
+    focus: 'Chest, back, shoulders and arms',
+    isRest: false,
+    items: items('d5', [
+      ['incline-chest-press-machine', 3, 10, 12, 90, ['incline-dumbbell-press']],
+      ['close-grip-lat-pulldown', 3, 10, 12, 90, ['assisted-pull-up']],
+      ['single-arm-cable-row', 2, 12, 12, 60, ['single-arm-machine-row'], true],
+      ['dumbbell-lateral-raise', 3, 12, 15, 60, ['cable-lateral-raise']],
+      ['reverse-pec-deck', 2, 12, 15, 60, ['cable-rear-delt-fly']],
+      ['ez-bar-curl', 2, 10, 12, 60, ['dumbbell-bicep-curl']],
+      ['straight-bar-pushdown', 2, 12, 15, 60, ['triceps-rope-pushdown']],
+    ]),
+  },
+  6: {
+    name: 'Lower Body + Core',
+    focus: 'Glutes, quads, hamstrings, calves and core',
+    isRest: false,
+    items: items('d6', [
+      ['bulgarian-split-squat', 3, 10, 10, 90, ['reverse-lunge'], true],
+      ['hip-thrust', 3, 10, 12, 90, ['glute-bridge']],
+      ['seated-leg-curl', 3, 12, 15, 60, ['lying-leg-curl']],
+      ['leg-extension', 2, 12, 15, 60, []],
+      ['seated-calf-raise', 3, 15, 20, 60, ['standing-calf-raise']],
+      ['cable-crunch', 3, 12, 15, 60, ['weighted-floor-crunch']],
+      ['plank', 3, 30, 45, 45, []],
+      ['hanging-knee-raise', 2, 10, 15, 60, ['reverse-crunch']],
+    ]),
+  },
+}
+
+/** True when a stored day still matches what v1 shipped (the user never edited it). */
+export function isUneditedV1(day: RoutineDay): boolean {
+  if (day.weekday !== 5 && day.weekday !== 6) return false
+  const v1 = V1_FRI_SAT[day.weekday]
+  const norm = (d: Pick<RoutineDay, 'name' | 'focus' | 'isRest' | 'items'>) =>
+    JSON.stringify({ n: d.name, f: d.focus, r: d.isRest, i: d.items.map((x) => [x.exerciseId, x.sets, x.repMin, x.repMax, x.restSec, x.perSide, x.alternatives]) })
+  return norm(day) === norm(v1)
 }
