@@ -100,6 +100,8 @@ with sync_playwright() as p:
     # ── TEST 2: switch Barbell Bench Press to Seated Chest Press Machine ──
     page.click("[data-testid=replace-button]")
     page.click("[data-testid=alt-seated-chest-press-machine]")
+    expect(page.get_by_test_id("pick-preview")).to_be_visible()
+    page.click("[data-testid=pick-confirm]")
     expect(page.get_by_test_id("exercise-name")).to_have_text("Seated Chest Press Machine")
     note = page.get_by_test_id("replaced-note").inner_text()
     check("T2 replace with Seated Chest Press Machine", "Barbell Bench Press" in note, note)
@@ -222,6 +224,7 @@ with sync_playwright() as p:
     expect(page.locator("[data-testid=alt-seated-chest-press-machine]")).not_to_contain_text("Checking history")
     alt_text = page.locator("[data-testid=alt-seated-chest-press-machine]").inner_text()
     page.click("[data-testid=alt-seated-chest-press-machine]")
+    page.click("[data-testid=pick-confirm]")
     expect(page.get_by_test_id("exercise-name")).to_have_text("Seated Chest Press Machine")
     expect(page.get_by_test_id("previous-performance")).to_contain_text("Last time")
     expect(page.get_by_test_id("set-row-1")).to_contain_text("Last 30 kg × 12")
@@ -260,13 +263,13 @@ with sync_playwright() as p:
 
     # Cardio + body weight (data for backup test)
     page.goto(URL + "#/cardio")
-    page.get_by_test_id("cardio-status-treadmill-warmup").wait_for()
-    st = page.get_by_test_id("cardio-status-treadmill-warmup").inner_text()
+    page.get_by_test_id("cardio-status-evening-walk").wait_for()
+    st = page.get_by_test_id("cardio-status-evening-walk").inner_text()
     check("Cardio planned NOT auto-completed", st == "Not logged yet", st)
-    page.click("[data-testid=cardio-log-treadmill-warmup]")
+    page.click("[data-testid=cardio-log-evening-walk]")
     page.get_by_label("Distance km").fill("1.05")
     page.click("[data-testid=cardio-save-done]")
-    expect(page.get_by_test_id("cardio-status-treadmill-warmup")).to_have_text("Done")
+    expect(page.get_by_test_id("cardio-status-evening-walk")).to_have_text("Done")
     check("Cardio logged as completed", True)
     page.goto(URL + "#/body")
     page.get_by_label("Body weight value").fill("82.4")
@@ -305,9 +308,40 @@ with sync_playwright() as p:
     page.get_by_test_id("unfinished-card").wait_for(timeout=5000)
     unfinished_back = page.get_by_test_id("unfinished-card").count()
     page.goto(URL + "#/cardio")
-    expect(page.get_by_test_id("cardio-status-treadmill-warmup")).not_to_have_text("Not logged yet")
-    cardio_back = page.get_by_test_id("cardio-status-treadmill-warmup").inner_text()
+    expect(page.get_by_test_id("cardio-status-evening-walk")).not_to_have_text("Not logged yet")
+    cardio_back = page.get_by_test_id("cardio-status-evening-walk").inner_text()
     check("T10 wipe then restore from JSON", wiped and restored == 1 and unfinished_back == 1 and cardio_back == "Done", f"wiped={wiped} history={restored} unfinished={unfinished_back} cardio={cardio_back}")
+
+    # ── Library and search ──
+    page.goto(URL + "#/library")
+    page.get_by_label("Search exercises").fill("hyperextension")
+    expect(page.locator("a[href*='#/library/fx-hyperextensions-back-extensions']")).to_be_visible()
+    page.get_by_label("Search exercises").fill("back extension")
+    hyper_by_synonym = page.locator("a[href*='#/library/fx-hyperextensions-back-extensions']").count() == 1
+    page.get_by_label("Search exercises").fill("smith curl")
+    smith = page.locator("a[href*='#/library/smith-machine-bicep-curl']").count() == 1
+    page.get_by_label("Search exercises").fill("")
+    total = int(re.search(r"(\d+) exercises", page.get_by_label("Search exercises").get_attribute("placeholder")).group(1))
+    check("Library: 600+ exercises, hyperextension found by either name, Smith curl present", total >= 600 and hyper_by_synonym and smith, f"total={total} synonym={hyper_by_synonym} smith={smith}")
+    # Swap via the picker: browse with photos, search, preview, confirm
+    page.goto(URL)
+    page.get_by_role("button", name="Resume workout").click()
+    goto_exercise(page, 5)
+    page.click("[data-testid=replace-button]")
+    page.get_by_label("Search exercises").fill("smith curl")
+    expect(page.locator("[data-testid=alt-smith-machine-bicep-curl]")).to_be_visible()
+    page.get_by_label("Search exercises").fill("rope curl")
+    try:
+        page.wait_for_function("(() => { const i = document.querySelector('[data-testid^=alt-] img'); return !!i && i.complete && i.naturalWidth > 0 })()", timeout=8000)
+        first_thumb_ok = True
+    except Exception:
+        first_thumb_ok = False
+    page.get_by_label("Search exercises").fill("smith curl")
+    page.click("[data-testid=alt-smith-machine-bicep-curl]")
+    expect(page.get_by_test_id("pick-preview")).to_contain_text("Smith Machine Bicep Curl")
+    page.click("[data-testid=pick-confirm]")
+    expect(page.get_by_test_id("exercise-name")).to_have_text("Smith Machine Bicep Curl")
+    check("Swap picker: search finds Smith curl, thumbnails show, preview then swap", first_thumb_ok, f"thumb_loaded={first_thumb_ok}")
 
     # ── TEST 11: offline ──
     page.goto(URL)
@@ -340,10 +374,11 @@ with sync_playwright() as p:
     fill(page, "Set 1 reps", "11")
     page.get_by_label("Complete set 1").click()
     expect(page.locator("[data-testid=set-row-1]")).to_have_attribute("data-status", "completed")
+    curated = [i for i in ids if not i.startswith("fx-")]
     check(
         "T11 offline: app, all images and logging work",
-        not broken and not bad_detail and n_imgs >= 49 and len(ids) == 49,
-        f"thumbs={n_imgs} broken={len(broken)} details={len(ids)} bad_details={bad_detail}",
+        not broken and not bad_detail and n_imgs >= 49 and len(curated) >= 49,
+        f"thumbs={n_imgs} broken={len(broken)} details={len(ids)} (built-in {len(curated)}) bad_details={bad_detail}",
     )
     shot(page, "offline-workout")
     ctx.set_offline(False)
